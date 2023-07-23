@@ -1,5 +1,7 @@
 import time
 import logging
+import timeit
+import pickle
 
 from typing import Optional
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -17,7 +19,7 @@ from .selenium_utils import (
 
 class DeeplTranslator(Translator):
     url = "https://www.deepl.com/translator"
-    max_char = 1500
+    max_char = 3000
     languages = {
         "auto": "Any language (detect)",
         "bg": "Bulgarian",
@@ -67,6 +69,12 @@ class DeeplTranslator(Translator):
     def _reset(self):
         logging.info(f"Going to {self.url}")
         self.driver.get(self.url)
+        # cookie_headers = 'releaseGroups=2349.DWFA-553.2.2_1780.DM-872.2.2_1808.DF-3339.2.2_2346.DF-3049.1.2_1219.DAL-136.2.3_2067.SEO-205.2.3_2359.WDW-155.2.2_2350.TACO-8.2.2_2345.DM-1001.2.2_1776.B2B-345.2.2_2305.WDW-122.1.1_2381.TC-822.1.3_2370.DAL-568.2.1_1444.DWFA-362.2.2_2374.DWFA-542.1.2_2377.DUI-131.1.1_976.DM-667.2.3_2024.SEO-103.1.4_1583.DM-807.2.5_2382.WDW-165.1.1_2256.DF-3461.2.2_866.DM-592.2.2_2358.TACO-20.2.2_2274.DM-952.2.2_1577.DM-594.2.3_1119.B2B-251.2.4_2022.DF-3340.2.2_2347.DF-3557.2.2_2025.ACL-24.2.3_2356.B2B-515.2.2_1084.TG-1207.2.3_1997.DM-941.2.3_1327.DWFA-391.2.2_1483.DM-821.2.2_2380.DWFA-494.1.1_2068.DF-3045.2.3_2365.WDW-179.2.2_2055.DM-814.2.3_1585.DM-900.2.3_1332.DM-709.2.2_2351.TACO-21.2.2_2357.TACO-19.1.2_220.DF-1925.1.9_863.DM-601.2.2_1571.DM-791.2.4_2366.WDW-189.2.2_2307.WDW-25.2.2_975.DM-609.2.3_2383.DF-3505.1.1; dapUid=4f616eae-34b4-4a07-87c5-4bc37d397ad7; dapSid=%7B%22sid%22%3A%2265bde19c-a62a-4ee3-80e3-f555a9713113%22%2C%22lastUpdate%22%3A1690130685%7D; privacySettings=%7B%22v%22%3A%221%22%2C%22t%22%3A1690070400%2C%22m%22%3A%22LAX_AUTO%22%2C%22consent%22%3A%5B%22NECESSARY%22%2C%22PERFORMANCE%22%2C%22COMFORT%22%2C%22MARKETING%22%5D%7D; dapVn=1; LMTBID=v2|d1655f78-54f2-489a-84c9-c939a3f9870b|11a94be065183dd228a7b38695963c01; dl_session=fa.2f8cb717-a674-4e7b-a18c-96eedd32e2b6; userCountry=VN'
+        #
+        # for cookie in cookie_headers.split(";"):
+        #     name, value = cookie.split('=', 1)
+        #     self.driver.add_cookie({'name': name, 'value': value})
+
         self._closePopUp()
 
         self.input_lang_from = TextArea(
@@ -121,26 +129,32 @@ class DeeplTranslator(Translator):
         Button(self.driver, "XPATH", xpath).click()
 
     def _is_translated(self, original: str, translation: str) -> bool:
-        return (
+        if (
             len(translation) != 0
             and "[...]" not in translation
             and len(original.splitlines()) == len(translation.splitlines())
             and original != translation
-        )
+        ): return True
+        else:
+            logging.info(f"not _is_translated splitlines {len(original.splitlines()) == len(translation.splitlines())}   {len(original.splitlines())} {len(translation.splitlines())}")
+            return False
 
     def translate(self, text: str, source_language: str, destination_language: str):
+        start = timeit.default_timer()
         if source_language != self.src_lang:
             self._set_source_language(source_language)
         if destination_language != self.target_lang:
             self._set_destination_language(destination_language)
 
-        clean_text = text.replace("[...]", "@[.]@")
-
-        self.input_lang_from.write((clean_text))
-
+        clean_text = text.replace("[...]", "~|@[.]@|~")
+        logging.debug(f"TIME SET lang {timeit.default_timer() - start}")
+        self.input_lang_from.write(value=(clean_text),is_clipboard= True)
+        logging.debug(f"TIME SET source {timeit.default_timer() - start}")
+        time.sleep(5)
         # Maximun number of iterations 60 seconds
         for _ in range(60):
             translation = self.input_destination_language.value
+            logging.info(f"translation output ::{_}: {timeit.default_timer() - start}")
 
             if self._is_translated(clean_text, translation):
                 time.sleep(2)
@@ -148,11 +162,12 @@ class DeeplTranslator(Translator):
 
                 # Reset the proxy flag
                 self.last_translation_failed = False
-                return translation.replace("@[.]@", "[...]")
+                return translation.replace("~|@[.]@|~", "[...]")
             time.sleep(1)
 
+        logging.debug(translation)
         # Maybe proxy got banned, so we try with a new proxy, but just once.
-        if not self.last_translation_failed:
+        if not self.last_translation_failed: # failing
             self.last_translation_failed = True
             self._rotate_proxy()
             return self.translate(text, source_language, destination_language)

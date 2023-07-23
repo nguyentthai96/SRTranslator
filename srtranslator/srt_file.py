@@ -1,11 +1,13 @@
 import re
 import srt
-
+import timeit
+import logging
 from srt import Subtitle
 from typing import List, Generator
 
 from .translators.base import Translator
 
+logger = logging.getLogger(__name__)
 
 class SrtFile:
     """SRT file class abstraction
@@ -35,24 +37,25 @@ class SrtFile:
             Generator: Each chunk at the time
         """
         portion = []
-
+        lengthPortion = 0
         for subtitle in self.subtitles:
             # Calculate new chunk size if subtitle content is added to actual chunk
             n_char = (
-                sum(len(sub.content) for sub in portion)  # All subtitles in chunk
-                + len(subtitle.content)  # New subtitle
-                + len(portion)  # Break lines in chunk
+                # sum(len(sub.content) for sub in portion)  # All subtitles in chunk
+                + sum(len(line) for line in subtitle.content) if (isinstance(subtitle.content, list)) else len(subtitle.content)  # New subtitle
+                # + len(portion)  # Break lines in chunk
                 + 1  # New breakline
             )
 
             # If chunk goes beyond the limit, yield it
-            if n_char >= chunk_size and len(portion) != 0:
+            if n_char + lengthPortion >= chunk_size and len(portion) != 0:
                 yield portion
                 portion = []
+                lengthPortion = 0
 
             # Put subtitle content in chunk
             portion.append(subtitle)
-
+            lengthPortion += n_char
         # Yield las chunk
         yield portion
 
@@ -79,9 +82,16 @@ class SrtFile:
                 sub.content = sub.content.replace("\n", "_")
                 continue
 
-            sub.content = sub.content.replace("\n", " ")
+            # NTT sub.content = sub.content.replace("\n", " ")
+            sub.content = list(sub.content.split("\n"))
 
         return subtitles
+
+    def join_lines(self) -> None:
+        """Re-single str lines in all subtitles multi line list type in file
+        """
+        for sub in self.subtitles:
+            sub.content = str("\n".join(sub.content))
 
     def wrap_lines(self, line_wrap_limit: int = 50) -> None:
         """Wrap lines in all subtitles in file
@@ -144,25 +154,35 @@ class SrtFile:
 
         # For each chunk of the file (based on the translator capabilities)
         for subs_slice in self._get_next_chunk(translator.max_char):
-            print(f"... Translating chunk. {int(100 * progress / self.length)} %")
+            print(f"... Waiting translating... {int(100 * progress / self.length)} %")
 
             # Put chunk in a single text with break lines
-            text = [sub.content for sub in subs_slice]
+            # text = [sub.content for sub in subs_slice]
+            text = [("\n".join(sub.content)) if isinstance(sub.content, list) else sub.content for sub in subs_slice]
             text = "\n".join(text)
 
             # Translate
+            start = timeit.default_timer()
             translation = translator.translate(
                 text, source_language, destination_language
             )
+            logging.info(f"TIME WAIT translation_ing {timeit.default_timer() - start}")
 
             # Break each line back into subtitle content
             translation = translation.splitlines()
+            j:int = 0
             for i in range(len(subs_slice)):
-                subs_slice[i].content = translation[i]
+                # subs_slice[i]['content_origin'] = subs_slice[i].content
+                if (isinstance(subs_slice[i].content, list)):
+                    subs_slice[i].content = translation[j:j+len(subs_slice[i].content)]
+                    j = j+len(subs_slice[i].content)
+                else:
+                    subs_slice[i].content = translation[i]
+                    j = j+1
 
-            progress += len(text)
+            progress += len(subs_slice)
 
-        print(f"... Translation done")
+        print(f"..................................................................................... Translation done")
 
     def save(self, filepath: str) -> None:
         """Saves SRT to file

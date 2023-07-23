@@ -1,6 +1,7 @@
+import time
 import sys
 import logging
-
+import pyperclip
 from typing import Optional, List
 from fp.fp import FreeProxy
 from selenium import webdriver
@@ -12,8 +13,12 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver import Firefox, FirefoxOptions, FirefoxProfile
 
 
+logger = logging.getLogger(__name__)
 def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
     """Creates a new proxy to use with a selenium driver and avoid get banned
 
@@ -25,15 +30,16 @@ def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
     """
     logging.info("Getting a new Proxy from https://www.sslproxies.org/")
     proxy = FreeProxy(country_id=country_id).get()
-    proxy = Proxy(
-        dict(
-            proxyType=ProxyType.MANUAL,
-            httpProxy=proxy,
-            ftpProxy=proxy,
-            sslProxy=proxy,
-            noProxy="",
-        )
-    )
+    # proxy = Proxy(
+    #     dict(
+    #         proxyType=ProxyType.MANUAL,
+    #         httpProxy=proxy,
+    #         ftpProxy=proxy,
+    #         sslProxy=proxy,
+    #         noProxy="",
+    #     )
+    # )
+
     return proxy
 
 
@@ -48,13 +54,39 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     """
     logging.info("Creating Selenium Webdriver instance")
     try:
-        driver = webdriver.Firefox(proxy=proxy)
-    except WebDriverException:
+        # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
+        #
+        # opts=Options()
+        opts = webdriver.FirefoxOptions()
+        if proxy:
+            opts.add_argument(f'--proxy-server={proxy}')
+        opts.add_argument("-headless")
+        opts.headless = True
+        opts.profile = FirefoxProfile(profile_directory='firefox_profile')
+        # profile = webdriver.FirefoxProfile('/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile')
+        # profile = webdriver.FirefoxProfile(profile_directory="/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
+        # opts.set_preference("profile", "/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
+        # opts.profile = FirefoxProfile("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
+        # opts.add_argument("-profile")
+        # opts.add_argument("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
+        # opts.add_argument('--user-data-dir=/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile')
+
+        # opts.add_argument('--headless')
+        # opts.profile = FirefoxProfile("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
+
+        # driver = webdriver.Firefox()
+        driver = webdriver.Firefox(options=opts)
+        # driver = webdriver.Firefox(options=opts, service=service)
+
+    except WebDriverException as e:
+        # logging.exception("WebDriverException", e, exc_info=True)
         logging.info("Installing Firefox GeckoDriver cause it isn't installed")
         gdd = GeckoDriverDownloader()
         gdd.download_and_install()
 
-        driver = webdriver.Firefox(proxy=proxy)
+        # firefox -marionette -start-debugger-server 2828
+        # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
+        driver = webdriver.Firefox()
 
     driver.maximize_window()
     return driver
@@ -85,6 +117,7 @@ class BaseElement:
                 return
 
             print(f"Timed out trying to get element ({locate_by} = {locate_value})")
+            logging.warning(f"Timed out trying to get element ({locate_by} = {locate_value})")
             logging.info("Closing browser")
             driver.quit()
             sys.exit()
@@ -100,7 +133,7 @@ class Text(BaseElement):
 
 
 class TextArea(BaseElement):
-    def write(self, value: str) -> None:
+    def write(self, value: str, is_clipboard:bool) -> None:
         if self.element is None:
             return
 
@@ -108,9 +141,25 @@ class TextArea(BaseElement):
         cmd_ctrl = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
 
         actions_handler = ActionChains(self.driver).move_to_element(self.element)
-        actions_handler.click().key_down(cmd_ctrl).send_keys("a").perform()
-        actions_handler.send_keys(Keys.CLEAR).key_up(cmd_ctrl).perform()
-        actions_handler.send_keys(*value).perform()
+        # time.sleep(4)
+        # logging.info("cmd_ctrl A...............................................")
+        actions_handler.click().key_down(cmd_ctrl).send_keys("a").key_up(cmd_ctrl).perform()
+        # logging.info("cmd_ctrl CLEAR...............................................")
+        # time.sleep(4)
+        actions_handler.send_keys(Keys.BACKSPACE).perform()
+        # logging.info("cmd_ctrl BACKSPACE...............................................")
+        # time.sleep(4)
+        actions_handler.send_keys(Keys.CLEAR).perform()
+        # time.sleep(5)
+        # logging.info(f"Clearing............................................... {is_clipboard}")
+        if (is_clipboard) :
+            # Copy the large text to the clipboard using pyperclip
+            pyperclip.copy(value)
+            # logging.info("cmd_ctrl VVVVVVVV...............................................", *value)
+            # time.sleep(5)
+            actions_handler.key_down(cmd_ctrl).send_keys('v').key_up(cmd_ctrl).perform()
+        else:
+            actions_handler.send_keys(*value).perform()
 
     @property
     def value(self) -> None:
