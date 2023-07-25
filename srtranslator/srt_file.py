@@ -9,6 +9,7 @@ from .translators.base import Translator
 
 logger = logging.getLogger(__name__)
 
+
 class SrtFile:
     """SRT file class abstraction
 
@@ -42,13 +43,34 @@ class SrtFile:
             # Calculate new chunk size if subtitle content is added to actual chunk
             n_char = (
                 # sum(len(sub.content) for sub in portion)  # All subtitles in chunk
-                + sum(len(line) for line in subtitle.content) if (isinstance(subtitle.content, list)) else len(subtitle.content)  # New subtitle
-                # + len(portion)  # Break lines in chunk
-                + 1  # New breakline
+                    + ((sum(len(line) for line in subtitle.content)+ len(subtitle.content))
+                       if (isinstance(subtitle.content, list)) else (len(subtitle.content)+1))  # New subtitle
+                    #+ len(subtitle.content)  # + len(portion)  # Break lines in chunk
+                    + (len(f"[000_{subtitle.index}_000]") + 1) #  5  # 1 New breakline and 4 size for number and breakline number
             )
 
             # If chunk goes beyond the limit, yield it
             if n_char + lengthPortion >= chunk_size and len(portion) != 0:
+                logging.info( f"Length ------------------------------------------------- lengthPortion {lengthPortion}")
+                abbbb = [
+                    (
+                            (
+                                (sum(len(line) for line in abc.content) + len(abc.content))
+                                if (isinstance(abc.content, list)) else (len(abc.content) + 1)
+                            )
+                            + (len(str(f"[000_{abc.index}_000]")) + 1))
+                    for abc in portion
+                ]
+
+                text = [(f"[000_{sub.index}_000]\n" + ("\n".join(sub.content)))
+                        if isinstance(sub.content,list)
+                        else f"[000_{sub.index}_000]\n{sub.content}"
+                        for sub in portion]
+                text = "\n".join(text)
+
+                if len(text) > chunk_size:
+                    logging.info(
+                        f"ERROR Please check data split ............................................................ len(text) {len(text)}")
                 yield portion
                 portion = []
                 lengthPortion = 0
@@ -73,14 +95,19 @@ class SrtFile:
         for sub in subtitles:
             sub.content = cleanr.sub("", sub.content)
             sub.content = srt.make_legal_content(sub.content)
-            sub.content = sub.content.strip()
+            sub.content = sub.content.strip()\
+                .replace("\\n", "\n")\
+                .replace("\\N", "\n")\
+                .replace("\\ ", "\n")\
+                .replace("\\ n", "\n")\
+                .replace("\\ N", "\n") # "\n", "\N", "\ ", "\ N", "\ n"
 
             if sub.content == "":
                 sub.content = "..."
 
-            if all(sentence.startswith("-") for sentence in sub.content.split("\n")):
-                sub.content = sub.content.replace("\n", "_")
-                continue
+            # if all(sentence.startswith("-") for sentence in sub.content.split("\n")):
+            #     sub.content = sub.content.replace("\n", "_")
+            #     continue
 
             # NTT sub.content = sub.content.replace("\n", " ")
             sub.content = list(sub.content.split("\n"))
@@ -91,7 +118,8 @@ class SrtFile:
         """Re-single str lines in all subtitles multi line list type in file
         """
         for sub in self.subtitles:
-            sub.content = str("\n".join(sub.content))
+            sub.content = (str("\n".join(sub.content)) if isinstance(sub.content, list) else sub.content) \
+                .replace('("', "(").replace('（"', "(").replace('（', "(")
 
     def wrap_lines(self, line_wrap_limit: int = 50) -> None:
         """Wrap lines in all subtitles in file
@@ -124,8 +152,8 @@ class SrtFile:
         for word in text.split():
             # Check if inserting a word in the last sentence goes beyond the wrap limit
             if (
-                len(wraped_lines) != 0
-                and len(wraped_lines[-1]) + len(word) < line_wrap_limit
+                    len(wraped_lines) != 0
+                    and len(wraped_lines[-1]) + len(word) < line_wrap_limit
             ):
                 # If not, add it to it
                 wraped_lines[-1] += f" {word}"
@@ -138,10 +166,10 @@ class SrtFile:
         return "\n".join(wraped_lines)
 
     def translate(
-        self,
-        translator: Translator,
-        source_language: str,
-        destination_language: str,
+            self,
+            translator: Translator,
+            source_language: str,
+            destination_language: str,
     ) -> None:
         """Translate SRT file using a translator of your choose
 
@@ -158,8 +186,15 @@ class SrtFile:
 
             # Put chunk in a single text with break lines
             # text = [sub.content for sub in subs_slice]
-            text = [("\n".join(sub.content)) if isinstance(sub.content, list) else sub.content for sub in subs_slice]
+            # text = [("\n".join(sub.content)) if isinstance(sub.content, list) else sub.content for sub in subs_slice]
+            text = [(f"[000_{sub.index}_000]\n" + ("\n".join(sub.content))) if isinstance(sub.content,
+                                                                                list) else f"[000_{sub.index}_000]\n{sub.content}"
+                    for sub in subs_slice]
             text = "\n".join(text)
+
+            if len(text) > translator.max_char:
+                logging.info(
+                    f"ERROR Please check data split ............................................................ len(text) {len(text)}  translator.max_char {translator.max_char}")
 
             # Translate
             start = timeit.default_timer()
@@ -170,15 +205,14 @@ class SrtFile:
 
             # Break each line back into subtitle content
             translation = translation.splitlines()
-            j:int = 0
+            j: int = 1
             for i in range(len(subs_slice)):
-                # subs_slice[i]['content_origin'] = subs_slice[i].content
                 if (isinstance(subs_slice[i].content, list)):
-                    subs_slice[i].content = translation[j:j+len(subs_slice[i].content)]
-                    j = j+len(subs_slice[i].content)
+                    subs_slice[i].content = translation[j:j + len(subs_slice[i].content)]
+                    j = j + len(subs_slice[i].content) + 1  # 1 line number
                 else:
                     subs_slice[i].content = translation[i]
-                    j = j+1
+                    j = j + 2  # 1 line number and 1 next index line content str
 
             progress += len(subs_slice)
 

@@ -54,15 +54,17 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     """
     logging.info("Creating Selenium Webdriver instance")
     try:
-        # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
+        service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
+        # service = Service(executable_path='/home/nguyentthai96/webdriver')
         #
         # opts=Options()
         opts = webdriver.FirefoxOptions()
         if proxy:
             opts.add_argument(f'--proxy-server={proxy}')
-        opts.add_argument("-headless")
-        opts.headless = True
-        opts.profile = FirefoxProfile(profile_directory='firefox_profile')
+        # opts.add_argument("--remote-debugging-port=2828")
+        # opts.add_argument("-headless")
+        # opts.headless = True
+        # opts.profile = FirefoxProfile(profile_directory='firefox_profile')
         # profile = webdriver.FirefoxProfile('/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile')
         # profile = webdriver.FirefoxProfile(profile_directory="/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
         # opts.set_preference("profile", "/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
@@ -75,12 +77,12 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
         # opts.profile = FirefoxProfile("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
 
         # driver = webdriver.Firefox()
-        driver = webdriver.Firefox(options=opts)
-        # driver = webdriver.Firefox(options=opts, service=service)
+        # driver = webdriver.Firefox(options=opts)
+        driver = webdriver.Firefox(options=opts, service=service)
 
     except WebDriverException as e:
-        # logging.exception("WebDriverException", e, exc_info=True)
         logging.info("Installing Firefox GeckoDriver cause it isn't installed")
+        logging.exception("WebDriverException", e, exc_info=True)
         gdd = GeckoDriverDownloader()
         gdd.download_and_install()
 
