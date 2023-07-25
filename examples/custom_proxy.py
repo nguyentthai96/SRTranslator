@@ -38,18 +38,21 @@ if not os.path.exists(pathtranslated):
     os.makedirs(pathtranslated)
 
 for filepath in folderFiles:
-    head, tail = os.path.split(filepath)
+    try:
+        head, tail = os.path.split(filepath)
 
-    # proxy = create_proxy(country_id=["US", "GB"])
-    driver = create_driver()
-    # The country ids are the ones in https://www.sslproxies.org/
-    translator = DeeplTranslator(driver)
+        #proxy = create_proxy(country_id=["US", "GB"])
+        driver = create_driver()
+        # The country ids are the ones in https://www.sslproxies.org/
+        translator = DeeplTranslator(driver)
 
-    # logging.info(f"processing translate {filepath}")
-    srt = SrtFile(filepath)
-    srt.translate(translator, "zh", "en-US")
-    # srt.wrap_lines()
-    srt.join_lines()
-    srt.save(os.path.join(pathtranslated, f"{tail}"))
-    logging.info(f"{tail}  with time {timeit.default_timer() - start}")
-    translator.quit()
+        # logging.info(f"processing translate {filepath}")
+        srt = SrtFile(filepath)
+        srt.translate(translator, "zh", "en-US")
+        # srt.wrap_lines()
+        srt.join_lines()
+        srt.save(os.path.join(pathtranslated, f"{tail}"))
+        logging.info(f"{tail}  with time {timeit.default_timer() - start}")
+        translator.quit()
+    except:
+        logging.error(f"File {filepath} failed cannot save file translate.")
