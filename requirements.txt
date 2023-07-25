@@ -26,6 +26,7 @@ PySocks==1.7.1
 python-dotenv==1.0.0
 python-editor==1.0.4
 pyuseragents==1.0.5
+PyVirtualDisplay==3.0
 readchar==4.0.5
 requests==2.31.0
 safeIO==1.2
