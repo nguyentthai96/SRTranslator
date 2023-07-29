@@ -19,6 +19,7 @@ from .selenium_utils import (
     Text, BaseElement,
 )
 
+logger = logging.getLogger(__name__)
 
 class DeeplTranslator(Translator):
     url = "https://www.deepl.com/translator"
@@ -72,7 +73,7 @@ class DeeplTranslator(Translator):
         self._reset()
 
     def _reset(self):
-        logging.info(f"Going to {self.url}")
+        logger.info(f"Going to {self.url}")
         self.driver.get(self.url)
         #
         self._set_login(self.username, self.password)
@@ -91,8 +92,8 @@ class DeeplTranslator(Translator):
 
     def _rotate_proxy(self):
         if self.driver is not None:
-            logging.info(" ======= Translation failed. Probably got banned. ======= ")
-            logging.info("Rotating proxy")
+            logger.info(" ======= Translation failed. Probably got banned. ======= ")
+            logger.info("Rotating proxy")
             self.quit()
 
         proxy = create_proxy()
@@ -132,7 +133,7 @@ class DeeplTranslator(Translator):
 
     def _set_login(self, username: str, password: str) -> None:
         time.sleep(5)
-        user_logged = WebDriverWait(self.driver, 5).until(
+        user_logged = WebDriverWait(self.driver, 8).until(
             EC.presence_of_element_located(
                 (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
         )
@@ -140,9 +141,9 @@ class DeeplTranslator(Translator):
             self.username_current = user_logged.text
         else:
             self.username_current = None
-        logging.info(f"Username current login :: {self.username_current}")
+        logger.info(f"Username current login :: {self.username_current}")
         if len(self.username_current) > 0 > self.username_current.find(username):
-            logging.info(f"Username existed logout user current {self.username_current}")
+            logger.info(f"Username existed logout user current {self.username_current}")
             # data-testid="menu-account-logout" Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
             self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
             time.sleep(5)
@@ -176,7 +177,7 @@ class DeeplTranslator(Translator):
                 self.username_current = user_logged.text
             else:
                 self.username_current = None
-            logging.info(f"Now login with username :: {self.username_current}")
+            logger.info(f"Now login with username :: {self.username_current}")
 
     def _is_translated(self, original: str, translation: str) -> bool:
         if (
@@ -187,7 +188,7 @@ class DeeplTranslator(Translator):
         ):
             return True
         else:
-            logging.info(
+            logger.info(
                 f"not _is_translated splitlines {len(original.splitlines()) == len(translation.splitlines())}   {len(original.splitlines())} {len(translation.splitlines())}")
             return False
 
@@ -211,7 +212,7 @@ class DeeplTranslator(Translator):
         for _ in range(25):
             try:
                 translation = self.input_destination_language.value
-                logging.info(f"translation output ::{_}: {timeit.default_timer() - start}")
+                print(f"translation output ::{_}: {timeit.default_timer() - start}")
 
                 if self._is_translated(clean_text, translation):
                     # Reset the proxy flag -- is success - last not failed

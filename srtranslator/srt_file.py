@@ -3,7 +3,6 @@ import srt
 import timeit
 import logging
 
-from chardet.cli import chardetect
 from srt import Subtitle
 from typing import List, Generator
 
@@ -58,7 +57,7 @@ class SrtFile:
 
             # If chunk goes beyond the limit, yield it
             if n_char + lengthPortion >= chunk_size and len(portion) != 0:
-                # logging.info( f"Length ------------------------------------------------- lengthPortion {lengthPortion}")
+                # logger.info( f"Length ------------------------------------------------- lengthPortion {lengthPortion}")
                 # abbbb = [
                 #     (
                 #             (
@@ -78,7 +77,7 @@ class SrtFile:
                 # text = "\n".join(text)
                 #
                 # if len(text) > chunk_size:
-                #     logging.info(
+                #     logger.info(
                 #         f"ERROR Please check data split ............................................................ len(text) {len(text)}  {sum(abbbb)}")
                 yield portion
                 portion = []
@@ -202,7 +201,7 @@ class SrtFile:
             text = "\n".join(text)
 
             if len(text) > translator.max_char:
-                logging.info(
+                logger.warning(
                     f"ERROR Please check data split ............................................................ len(text) {len(text)}  translator.max_char {translator.max_char}")
 
             # Translate
@@ -210,7 +209,7 @@ class SrtFile:
             translation = translator.translate(
                 text, source_language, destination_language
             )
-            logging.info(f"TIME WAIT translation_ing {timeit.default_timer() - start}")
+            logger.debug(f"TIME WAIT translation_ing {timeit.default_timer() - start}")
 
             # Break each line back into subtitle content
             translation = translation.splitlines()
