@@ -1,3 +1,4 @@
+import gzip
 import sys
 import os
 import glob
@@ -17,10 +18,22 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setLevel(logging.DEBUG)  # logging.WARNING
 # stdout_handler.setFormatter(formatter)
 
-logHandler = handlers.RotatingFileHandler('application_srt.log', maxBytes=51200, backupCount=2)
-file_handler = logging.FileHandler('application_srt.log')
+class GZipRotator:
+    def __call__(self, source, dest):
+        os.rename(source, dest)
+        f_in = open(dest, 'rb')
+        f_out = gzip.open("%s.gz" % dest, 'wb')
+        f_out.writelines(f_in)
+        f_out.close()
+        f_in.close()
+        os.remove(dest)
+if not os.path.exists(pathlib.Path('logs').resolve()):
+    os.makedirs(pathlib.Path('logs').resolve())
+logHandler = handlers.RotatingFileHandler('logs/application_srt.log', maxBytes=102400, backupCount=100)
+file_handler = logging.FileHandler('logs/application_srt.log')
 file_handler.setLevel(logging.DEBUG)  # logging.INFO
 # file_handler.setFormatter(formatter) # filemode='a',
+file_handler.rotator = GZipRotator()
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d  %(levelname)s   %(name)s    %(message)s',
                     datefmt='%H:%M:%S',
@@ -41,6 +54,10 @@ else:
 if len(list_file) <1:
     logging.info(f"Please recheck copy file translate to folder path :: {folder}. No-any file translate.")
     sys.exit(-1)
+
+firefox_profile = pathlib.Path('firefox_profile').resolve()
+if not os.path.exists(firefox_profile):
+    os.makedirs(firefox_profile)
 
 # proxy = create_proxy(country_id=["US", "GB"])
 driver = create_driver()
@@ -63,10 +80,11 @@ if not os.path.exists(source_completed):
     os.makedirs(source_completed)
 
 progress = 0
+failed = 0
 for filepath in sorted(list_file):
     try:
         head, tail = os.path.split(filepath)
-        print(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... ")
+        print(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... ({failed} failed)")
         srt = SrtFile(filepath)
         srt.translate(translator, "auto", "en-US")
         # srt.wrap_lines()
@@ -76,11 +94,15 @@ for filepath in sorted(list_file):
         shutil.move(filepath, os.path.join(source_completed, f"{tail}"))
         progress += 1
     except Exception as e:
-        logging.error(f"File {filepath} failed cannot save file translate.")
+        failed += 1
+        logging.error(f"File {filepath} failed cannot save file translate ({failed} failed).")
         logging.error(f"Error process file :: {filepath}  Ex:",e)
+        translator.quit()
+        driver = create_driver()
+        translator = DeeplTranslator(driver, username='viphn8688@gmail.com', password='*Um5h^a6X8VbTn7^')
 
 print(f"====================================================================================================================================")
-print(f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}  _________________")
+print(f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}   ({failed} failed)  _________________")
 
 translator.quit()
 
