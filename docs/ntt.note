@@ -1,0 +1,17 @@
+pip install pyinstaller
+pip freeze > requirements.txt
+pip install pyvirtualdisplay
+
+https://stackoverflow.com/questions/5458048/how-can-i-make-a-python-script-standalone-executable-to-run-without-any-dependen
+pyinstaller -F -- --paths=venv\Lib\site-packages  yourprogram.py
+
+
+sudo apt-get install build-essential python3-dev
+
+
+pip install Cython
+
+python setup.py install
+
+
+pip install Cython --install-option="--no-cython-compile"

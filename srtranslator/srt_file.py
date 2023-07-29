@@ -2,6 +2,8 @@ import re
 import srt
 import timeit
 import logging
+
+from chardet.cli import chardetect
 from srt import Subtitle
 from typing import List, Generator
 
@@ -21,6 +23,11 @@ class SrtFile:
         self.subtitles = []
         self.length = 0
         print(f"Loading {filepath}")
+        # from bs4.dammit import UnicodeDammit
+        # with open(filepath, 'rb') as file:
+        #     content = file.read()
+        # suggestion = UnicodeDammit(content)
+        # encode = suggestion.original_encoding
         with open(filepath, "r", encoding="utf-8", errors="ignore") as input_file:
             srt_file = srt.parse(input_file)
             subtitles = list(srt_file)
@@ -46,31 +53,33 @@ class SrtFile:
                     + ((sum(len(line) for line in subtitle.content)+ len(subtitle.content))
                        if (isinstance(subtitle.content, list)) else (len(subtitle.content)+1))  # New subtitle
                     #+ len(subtitle.content)  # + len(portion)  # Break lines in chunk
-                    + (len(f"[000_{subtitle.index}_000]") + 1) #  5  # 1 New breakline and 4 size for number and breakline number
+                    + 1 # (len(f"[000_{subtitle.index}_000]") + 1) #  5  # 1 New breakline and 4 size for number and breakline number
             )
 
             # If chunk goes beyond the limit, yield it
             if n_char + lengthPortion >= chunk_size and len(portion) != 0:
-                logging.info( f"Length ------------------------------------------------- lengthPortion {lengthPortion}")
-                abbbb = [
-                    (
-                            (
-                                (sum(len(line) for line in abc.content) + len(abc.content))
-                                if (isinstance(abc.content, list)) else (len(abc.content) + 1)
-                            )
-                            + (len(str(f"[000_{abc.index}_000]")) + 1))
-                    for abc in portion
-                ]
-
-                text = [(f"[000_{sub.index}_000]\n" + ("\n".join(sub.content)))
-                        if isinstance(sub.content,list)
-                        else f"[000_{sub.index}_000]\n{sub.content}"
-                        for sub in portion]
-                text = "\n".join(text)
-
-                if len(text) > chunk_size:
-                    logging.info(
-                        f"ERROR Please check data split ............................................................ len(text) {len(text)}")
+                # logging.info( f"Length ------------------------------------------------- lengthPortion {lengthPortion}")
+                # abbbb = [
+                #     (
+                #             (
+                #                 (sum(len(line) for line in abc.content) + len(abc.content))
+                #                 if (isinstance(abc.content, list)) else (len(abc.content) + 1)
+                #             )
+                #             +  1
+                #     )
+                #     for abc in portion
+                # ]
+                #
+                #
+                # text = [(f"\n" + ("\n".join(sub.content)))
+                #         if isinstance(sub.content,list)
+                #         else f"\n{sub.content}"
+                #         for sub in portion]
+                # text = "\n".join(text)
+                #
+                # if len(text) > chunk_size:
+                #     logging.info(
+                #         f"ERROR Please check data split ............................................................ len(text) {len(text)}  {sum(abbbb)}")
                 yield portion
                 portion = []
                 lengthPortion = 0
@@ -91,7 +100,7 @@ class SrtFile:
             List[Subtitle]: Same list of subtitles, but cleaned
         """
         cleanr = re.compile("<.*?>")
-
+        import codecs
         for sub in subtitles:
             sub.content = cleanr.sub("", sub.content)
             sub.content = srt.make_legal_content(sub.content)
@@ -187,8 +196,8 @@ class SrtFile:
             # Put chunk in a single text with break lines
             # text = [sub.content for sub in subs_slice]
             # text = [("\n".join(sub.content)) if isinstance(sub.content, list) else sub.content for sub in subs_slice]
-            text = [(f"[000_{sub.index}_000]\n" + ("\n".join(sub.content))) if isinstance(sub.content,
-                                                                                list) else f"[000_{sub.index}_000]\n{sub.content}"
+            text = [(f"\n" + ("\n".join(sub.content))) if isinstance(sub.content,
+                                                                                list) else f"\n{sub.content}"
                     for sub in subs_slice]
             text = "\n".join(text)
 

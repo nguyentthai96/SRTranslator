@@ -1,10 +1,16 @@
+import json
 import time
 import sys
 import logging
 import pyperclip
+import klembord
+import xerox
 from typing import Optional, List
+import html
+
 from fp.fp import FreeProxy
 from selenium import webdriver
+from selenium.webdriver.remote.webelement import WebElement
 from webdriverdownloader import GeckoDriverDownloader
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -29,7 +35,7 @@ def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
         Proxy: Selenium WebDriver proxy
     """
     logging.info("Getting a new Proxy from https://www.sslproxies.org/")
-    proxy = FreeProxy(country_id=country_id).get()
+    proxy = FreeProxy(country_id=country_id, https= True).get()
     # proxy = Proxy(
     #     dict(
     #         proxyType=ProxyType.MANUAL,
@@ -54,32 +60,18 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     """
     logging.info("Creating Selenium Webdriver instance")
     try:
-        service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
-        # service = Service(executable_path='/home/nguyentthai96/webdriver')
-        #
-        # opts=Options()
-        opts = webdriver.FirefoxOptions()
+        # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
+        service = Service(service_args=['--log', 'debug'])
+        options = webdriver.FirefoxOptions()
         if proxy:
-            opts.add_argument(f'--proxy-server={proxy}')
-        # opts.add_argument("--remote-debugging-port=2828")
-        # opts.add_argument("-headless")
-        # opts.headless = True
-        # opts.profile = FirefoxProfile(profile_directory='firefox_profile')
-        # profile = webdriver.FirefoxProfile('/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile')
-        # profile = webdriver.FirefoxProfile(profile_directory="/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
-        # opts.set_preference("profile", "/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
-        # opts.profile = FirefoxProfile("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
-        # opts.add_argument("-profile")
-        # opts.add_argument("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
-        # opts.add_argument('--user-data-dir=/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile')
-
-        # opts.add_argument('--headless')
-        # opts.profile = FirefoxProfile("/home/nguyentthai96/Desktop/freelancer/SRTranslator/examples/firefox_profile")
-
+            options.add_argument(f'--proxy-server={proxy}')
+        # options.add_argument("--no-sandbox")
+        # options.add_argument("-headless")
+        # options.add_argument("--remote-debugging-port=2828")
+        # options.add_argument('--headless')
+        #
         # driver = webdriver.Firefox()
-        # driver = webdriver.Firefox(options=opts)
-        driver = webdriver.Firefox(options=opts, service=service)
-
+        driver = webdriver.Firefox(options=options, service=service)
     except WebDriverException as e:
         logging.info("Installing Firefox GeckoDriver cause it isn't installed")
         logging.exception("WebDriverException", e, exc_info=True)
@@ -135,7 +127,7 @@ class Text(BaseElement):
 
 
 class TextArea(BaseElement):
-    def write(self, value: str, is_clipboard:bool) -> None:
+    def write(self, value: str, is_clipboard:bool = False) -> None:
         if self.element is None:
             return
 
@@ -143,22 +135,17 @@ class TextArea(BaseElement):
         cmd_ctrl = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
 
         actions_handler = ActionChains(self.driver).move_to_element(self.element)
-        # time.sleep(4)
-        # logging.info("cmd_ctrl A...............................................")
         actions_handler.click().key_down(cmd_ctrl).send_keys("a").key_up(cmd_ctrl).perform()
-        # logging.info("cmd_ctrl CLEAR...............................................")
-        # time.sleep(4)
         actions_handler.send_keys(Keys.BACKSPACE).perform()
-        # logging.info("cmd_ctrl BACKSPACE...............................................")
-        # time.sleep(4)
         actions_handler.send_keys(Keys.CLEAR).perform()
-        # time.sleep(5)
-        # logging.info(f"Clearing............................................... {is_clipboard}")
-        if (is_clipboard) :
+        if is_clipboard :
             # Copy the large text to the clipboard using pyperclip
-            pyperclip.copy(value)
-            # logging.info("cmd_ctrl VVVVVVVV...............................................", *value)
-            # time.sleep(5)
+            # pyperclip.copy(value)
+            # xerox.copy(value)
+            # klembord.set_text(value)
+            # data =html.escape(value)
+            # self.driver.execute_script(f"navigator.clipboard.writeText(unescape(`{data}`));")
+            self.driver.execute_script(f"navigator.clipboard.writeText(`{value}`);")
             actions_handler.key_down(cmd_ctrl).send_keys('v').key_up(cmd_ctrl).perform()
         else:
             actions_handler.send_keys(*value).perform()
