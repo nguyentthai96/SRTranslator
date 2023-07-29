@@ -168,10 +168,6 @@ class DeeplTranslator(Translator):
             logging.error(f"==========================================================================================")
         else:
             time.sleep(3)
-            WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.ID, "dl_translator"))
-            )
-
             user_logged = WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located(
                     (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
@@ -209,11 +205,10 @@ class DeeplTranslator(Translator):
             logging.debug(f"TIME SET source {timeit.default_timer() - start}")
         except Exception as e:
             logging.warning("Error catch exception element.........................................................", e)
-            # self.last_translation_failed = False  # is stop translate file no retry
 
         time.sleep(5)
         # Maximun number of iterations 60 seconds
-        for _ in range(60):
+        for _ in range(25):
             try:
                 translation = self.input_destination_language.value
                 logging.info(f"translation output ::{_}: {timeit.default_timer() - start}")

@@ -1,4 +1,6 @@
 import json
+import os
+import pathlib
 import time
 import sys
 import logging
@@ -23,7 +25,6 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver import Firefox, FirefoxOptions, FirefoxProfile
 
-
 logger = logging.getLogger(__name__)
 def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
     """Creates a new proxy to use with a selenium driver and avoid get banned
@@ -35,7 +36,7 @@ def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
         Proxy: Selenium WebDriver proxy
     """
     logging.info("Getting a new Proxy from https://www.sslproxies.org/")
-    proxy = FreeProxy(country_id=country_id, https= True).get()
+    proxy = FreeProxy(country_id=country_id, https=True).get()
     # proxy = Proxy(
     #     dict(
     #         proxyType=ProxyType.MANUAL,
@@ -61,7 +62,9 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     logging.info("Creating Selenium Webdriver instance")
     try:
         # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
-        service = Service(service_args=['--log', 'debug'])
+        service = Service(service_args=['--log', 'debug',
+                                        '--profile-root',
+                                        'firefox_profile'])
         options = webdriver.FirefoxOptions()
         if proxy:
             options.add_argument(f'--proxy-server={proxy}')
@@ -88,13 +91,13 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
 
 class BaseElement:
     def __init__(
-        self,
-        driver: webdriver,
-        locate_by: str,
-        locate_value: str,
-        multiple: bool = False,
-        wait_time: int = 100,
-        optional: bool = False,
+            self,
+            driver: webdriver,
+            locate_by: str,
+            locate_value: str,
+            multiple: bool = False,
+            wait_time: int = 100,
+            optional: bool = False,
     ) -> None:
 
         self.driver = driver
@@ -127,7 +130,7 @@ class Text(BaseElement):
 
 
 class TextArea(BaseElement):
-    def write(self, value: str, is_clipboard:bool = False) -> None:
+    def write(self, value: str, is_clipboard: bool = False) -> None:
         if self.element is None:
             return
 
@@ -138,7 +141,7 @@ class TextArea(BaseElement):
         actions_handler.click().key_down(cmd_ctrl).send_keys("a").key_up(cmd_ctrl).perform()
         actions_handler.send_keys(Keys.BACKSPACE).perform()
         actions_handler.send_keys(Keys.CLEAR).perform()
-        if is_clipboard :
+        if is_clipboard:
             # Copy the large text to the clipboard using pyperclip
             # pyperclip.copy(value)
             # xerox.copy(value)
