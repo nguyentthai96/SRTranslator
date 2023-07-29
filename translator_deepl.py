@@ -82,7 +82,7 @@ failed = 0
 for filepath in list_file:
     try:
         head, tail = os.path.split(filepath)
-        logger.info(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... ({failed} failed)")
+        logger.info(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
         srt = SrtFile(filepath)
         srt.translate(translator, "auto", "en-US")
         # srt.wrap_lines()
@@ -93,7 +93,7 @@ for filepath in list_file:
         progress += 1
     except Exception as e:
         failed += 1
-        logger.error(f"File {filepath} failed cannot save file translate ({failed} failed).")
+        logger.error(f"File {filepath} failed cannot save file translate (summary: {failed} failed).")
         logger.error(f"Error process file :: {filepath}  Ex:",e)
         translator.quit()
         driver = create_driver()

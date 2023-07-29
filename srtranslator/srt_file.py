@@ -232,7 +232,7 @@ class SrtFile:
         Args:
             filepath (str): Path of the new file
         """
-        print(f"Saving {filepath}")
+        logger.info(f"Saving {filepath}")
         subtitles = srt.compose(self.subtitles)
         with open(filepath, "w", encoding="utf-8") as file_out:
             file_out.write(subtitles)
