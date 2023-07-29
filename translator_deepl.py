@@ -2,6 +2,7 @@ import gzip
 import sys
 import os
 import glob
+import time
 import timeit
 import shutil
 from datetime import datetime
@@ -103,4 +104,4 @@ logger.info(f"==================================================================
 logger.info(f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}   ({failed} failed)  _________________")
 
 translator.quit()
-
+time.sleep(5)
