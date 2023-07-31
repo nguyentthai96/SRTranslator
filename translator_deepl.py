@@ -2,12 +2,13 @@ import gzip
 import sys
 import os
 import glob
+import time
 import timeit
 import shutil
 from datetime import datetime
 
 from srtranslator import SrtFile
-from srtranslator.translators.deepl_scrap import DeeplTranslator
+from srtranslator.translators.deepl_handler import DeeplTranslator
 from srtranslator.translators.selenium_utils import create_proxy, create_driver
 import pathlib
 
@@ -30,32 +31,30 @@ class GZipRotator:
 if not os.path.exists(pathlib.Path('logs').resolve()):
     os.makedirs(pathlib.Path('logs').resolve())
 logHandler = handlers.RotatingFileHandler('logs/application_srt.log', maxBytes=102400, backupCount=100)
-file_handler = logging.FileHandler('logs/application_srt.log')
-file_handler.setLevel(logging.DEBUG)  # logging.INFO
-# file_handler.setFormatter(formatter) # filemode='a',
-file_handler.rotator = GZipRotator()
+logHandler.rotator = GZipRotator()
 
-logging.basicConfig(format='%(asctime)s,%(msecs)d  %(levelname)s   %(name)s    %(message)s',
+logging.basicConfig(format='%(asctime)s,%(msecs)d  %(levelname)s   %(filename)s    %(message)s',
                     datefmt='%H:%M:%S',
                     level=logging.INFO,
-                    handlers=[file_handler, stdout_handler, logHandler]
+                    handlers=[stdout_handler, logHandler]
                     )
 
+logger = logging.getLogger(__name__)
 
 folder = pathlib.Path('source_srt').resolve()
 list_file = glob.glob(os.path.join(folder, "**/*.srt"), recursive=True)
 if not os.path.exists(folder):
     os.makedirs(folder)
-    logging.info(f"Please recheck copy file translate to folder path :: {folder}")
+    logger.info(f"Please recheck copy file translate to folder path :: {folder}")
     sys.exit(-1)
 else:
-    logging.info(f"Processing translate Folder path :: {folder} size {len(list_file)} file.")
+    logger.info(f"Processing translate Folder path :: {folder} size {len(list_file)} file.")
 
 if len(list_file) <1:
-    logging.info(f"Please recheck copy file translate to folder path :: {folder}. No-any file translate.")
+    logger.info(f"Please recheck copy file translate to folder path :: {folder}. No-any file translate.")
     sys.exit(-1)
 
-firefox_profile = pathlib.Path('firefox_profile').resolve()
+firefox_profile = pathlib.Path('tmp/firefox_profile').resolve()
 if not os.path.exists(firefox_profile):
     os.makedirs(firefox_profile)
 
@@ -81,28 +80,28 @@ if not os.path.exists(source_completed):
 
 progress = 0
 failed = 0
-for filepath in sorted(list_file):
+for filepath in list_file:
     try:
         head, tail = os.path.split(filepath)
-        print(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... ({failed} failed)")
+        logger.info(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
         srt = SrtFile(filepath)
         srt.translate(translator, "auto", "en-US")
         # srt.wrap_lines()
         srt.join_lines()
         srt.save(os.path.join(pathtranslated, f"{tail}"))
-        logging.info(f"{tail}  with time {timeit.default_timer() - start}")
+        print(f"{tail}  with time {timeit.default_timer() - start}")
         shutil.move(filepath, os.path.join(source_completed, f"{tail}"))
         progress += 1
     except Exception as e:
         failed += 1
-        logging.error(f"File {filepath} failed cannot save file translate ({failed} failed).")
-        logging.error(f"Error process file :: {filepath}  Ex:",e)
+        logger.error(f"File {filepath} failed cannot save file translate (summary: {failed} failed).")
+        logger.error(f"Error process file :: {filepath}  Ex:",e)
         translator.quit()
         driver = create_driver()
         translator = DeeplTranslator(driver, username='viphn8688@gmail.com', password='*Um5h^a6X8VbTn7^')
 
-print(f"====================================================================================================================================")
-print(f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}   ({failed} failed)  _________________")
+logger.info(f"====================================================================================================================================")
+logger.info(f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}   ({failed} failed)  _________________")
 
 translator.quit()
-
+time.sleep(5)

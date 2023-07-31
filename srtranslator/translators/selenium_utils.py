@@ -6,7 +6,6 @@ import sys
 import logging
 import pyperclip
 import klembord
-import xerox
 from typing import Optional, List
 import html
 
@@ -35,7 +34,7 @@ def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
     Returns:
         Proxy: Selenium WebDriver proxy
     """
-    logging.info("Getting a new Proxy from https://www.sslproxies.org/")
+    logger.info("Getting a new Proxy from https://www.sslproxies.org/")
     proxy = FreeProxy(country_id=country_id, https=True).get()
     # proxy = Proxy(
     #     dict(
@@ -59,30 +58,32 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     Returns:
         WebDriver: Selenium WebDriver
     """
-    logging.info("Creating Selenium Webdriver instance")
+    logger.info("Creating Selenium Webdriver instance")
     try:
         # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=[
         #     '--marionette-port', '2828', '--connect-existing',
         #     '--log', 'debug',
-        #     '--profile-root', 'firefox_profile'
+        #     '--profile-root', 'tmp'
         # ])
         service = Service(service_args=[
             '--marionette-port', '2828', '--connect-existing',
             '--log', 'debug',
-            '--profile-root', 'firefox_profile'
+            '--profile-root', 'tmp'
         ])
         options = webdriver.FirefoxOptions()
+        options.set_preference('profile', 'tmp/firefox_profile')
+        options.add_argument("-profile")
+        options.add_argument('tmp/firefox_profile')
         if proxy:
             options.add_argument(f'--proxy-server={proxy}')
         # options.add_argument("--no-sandbox")
-        # options.add_argument("-headless")
+        options.add_argument("-headless")
         # options.add_argument("--remote-debugging-port=2828")
-        # options.add_argument('--headless')
         #
         # driver = webdriver.Firefox()
         driver = webdriver.Firefox(options=options, service=service)
     except WebDriverException as e:
-        logging.info("Installing Firefox GeckoDriver cause it isn't installed")
+        logger.info("Installing Firefox GeckoDriver cause it isn't installed")
         logging.exception("WebDriverException", e, exc_info=True)
         gdd = GeckoDriverDownloader()
         gdd.download_and_install()
@@ -121,7 +122,7 @@ class BaseElement:
 
             print(f"Timed out trying to get element ({locate_by} = {locate_value})")
             logging.warning(f"Timed out trying to get element ({locate_by} = {locate_value})")
-            logging.info("Closing browser")
+            logger.info("Closing browser")
             driver.quit()
             sys.exit()
 
