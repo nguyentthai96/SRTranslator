@@ -129,7 +129,8 @@ class SrtFile:
         """
         for sub in self.subtitles:
             sub.content = (str("\n".join(sub.content)) if isinstance(sub.content, list) else sub.content) \
-                .replace('("', "(").replace('（"', "(").replace('（', "(")
+                .replace('("', "(").replace('（"', "(").replace('（', "(") \
+                .replace('")', ")")
 
     def wrap_lines(self, line_wrap_limit: int = 50) -> None:
         """Wrap lines in all subtitles in file
