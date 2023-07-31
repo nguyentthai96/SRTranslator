@@ -104,7 +104,9 @@ class SrtFile:
         for sub in subtitles:
             sub.content = cleanr.sub("", sub.content)
             sub.content = srt.make_legal_content(sub.content)
-            sub.content = sub.content.strip()\
+            sub.content = sub.content.strip() \
+                .replace('（', "(")\
+                .replace('）', ")")\
                 .replace("\\n", "\n")\
                 .replace("\\N", "\n")\
                 .replace("\\ ", "\n")\

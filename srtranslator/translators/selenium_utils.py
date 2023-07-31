@@ -61,10 +61,16 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     """
     logging.info("Creating Selenium Webdriver instance")
     try:
-        # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
-        service = Service(service_args=['--log', 'debug',
-                                        '--profile-root',
-                                        'firefox_profile'])
+        # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=[
+        #     '--marionette-port', '2828', '--connect-existing',
+        #     '--log', 'debug',
+        #     '--profile-root', 'firefox_profile'
+        # ])
+        service = Service(service_args=[
+            '--marionette-port', '2828', '--connect-existing',
+            '--log', 'debug',
+            '--profile-root', 'firefox_profile'
+        ])
         options = webdriver.FirefoxOptions()
         if proxy:
             options.add_argument(f'--proxy-server={proxy}')

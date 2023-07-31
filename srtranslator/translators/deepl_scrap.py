@@ -132,7 +132,7 @@ class DeeplTranslator(Translator):
 
     def _set_login(self, username: str, password: str) -> None:
         time.sleep(5)
-        user_logged = WebDriverWait(self.driver, 5).until(
+        user_logged = WebDriverWait(self.driver, 8).until(
             EC.presence_of_element_located(
                 (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
         )
