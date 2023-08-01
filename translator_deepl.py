@@ -38,7 +38,8 @@ logging.basicConfig(format='%(asctime)s,%(msecs)d  %(levelname)s   %(filename)s 
                     level=logging.INFO,
                     handlers=[stdout_handler, logHandler]
                     )
-
+logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
+logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 folder = pathlib.Path('source_srt').resolve()

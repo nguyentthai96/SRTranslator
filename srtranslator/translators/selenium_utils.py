@@ -5,7 +5,7 @@ import time
 import sys
 import logging
 import pyperclip
-import klembord
+
 from typing import Optional, List
 import html
 
@@ -60,13 +60,12 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     """
     logger.info("Creating Selenium Webdriver instance")
     try:
-        # service = Service(executable_path='/home/nguyentthai96/webdriver',  port=3000, service_args=[
+        # service = Service(port=3000, service_args=[
         #     '--marionette-port', '2828', '--connect-existing',
         #     '--log', 'debug',
         #     '--profile-root', 'tmp'
         # ])
-        service = Service(service_args=[
-            '--marionette-port', '2828', '--connect-existing',
+        service = Service( service_args=[
             '--log', 'debug',
             '--profile-root', 'tmp'
         ])
@@ -74,13 +73,9 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
         options.set_preference('profile', 'tmp/firefox_profile')
         options.add_argument("-profile")
         options.add_argument('tmp/firefox_profile')
-        if proxy:
-            options.add_argument(f'--proxy-server={proxy}')
-        # options.add_argument("--no-sandbox")
-        options.add_argument("-headless")
-        # options.add_argument("--remote-debugging-port=2828")
         #
-        # driver = webdriver.Firefox()
+        options.add_argument("-headless")
+        #
         driver = webdriver.Firefox(options=options, service=service)
     except WebDriverException as e:
         logger.info("Installing Firefox GeckoDriver cause it isn't installed")
@@ -88,7 +83,14 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
         gdd = GeckoDriverDownloader()
         gdd.download_and_install()
 
-        # firefox -marionette -start-debugger-server 2828
+        # C:\Users\<UserName>\AppData\Roaming.
+        # https://www.browserstack.com/automate/capabilities
+        # https://stackoverflow.com/questions/72331816/how-to-connect-to-an-existing-firefox-instance-using-seleniumpython
+        # https://www.minitool.com/news/your-firefox-profile-cannot-be-loaded.html
+        # firefox -p
+        # firefox.exe --new-instance -ProfileManager -marionette -start-debugger-server 2828
+        # firefox.exe -marionette -start-debugger-server 2828
+        # firefox.exe --new-instance -P deepl -marionette
         # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
         driver = webdriver.Firefox()
 

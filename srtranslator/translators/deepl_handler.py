@@ -75,8 +75,12 @@ class DeeplTranslator(Translator):
     def _reset(self):
         logger.info(f"Going to {self.url}")
         self.driver.get(self.url)
+        self._closePopUp()
         #
-        self._set_login(self.username, self.password)
+        try:
+            self._set_login(self.username, self.password)
+        except Exception as e:
+            logger.info(f"Error exception login :: error ", e)
 
         self._closePopUp()
 
@@ -132,7 +136,7 @@ class DeeplTranslator(Translator):
         Button(self.driver, "XPATH", xpath).click()
 
     def _set_login(self, username: str, password: str) -> None:
-        time.sleep(5)
+        time.sleep(15)
         user_logged = WebDriverWait(self.driver, 8).until(
             EC.presence_of_element_located(
                 (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
@@ -153,7 +157,7 @@ class DeeplTranslator(Translator):
 
         button_login = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-out-btn']")
         button_login.click()
-        time.sleep(2)
+        time.sleep(10)
         input_email = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-username']")
         input_email.write(username)
         input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
@@ -161,7 +165,7 @@ class DeeplTranslator(Translator):
 
         button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
         button_submit.click()
-        time.sleep(5)
+        time.sleep(15)
         #
         notification = BaseElement(self.driver, "XPATH", f"//div[@data-testid='error-notification']", optional=True)
         if notification.element:
