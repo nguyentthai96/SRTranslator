@@ -1,4 +1,5 @@
 import gzip
+import json
 import sys
 import os
 import glob
@@ -6,6 +7,7 @@ import time
 import timeit
 import shutil
 from datetime import datetime
+from typing import List
 
 from srtranslator import SrtFile
 from srtranslator.translators.deepl_handler import DeeplTranslator
@@ -15,9 +17,6 @@ import pathlib
 import logging
 import logging.handlers as handlers
 
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setLevel(logging.DEBUG)  # logging.WARNING
-# stdout_handler.setFormatter(formatter)
 
 class GZipRotator:
     def __call__(self, source, dest):
@@ -28,6 +27,117 @@ class GZipRotator:
         f_out.close()
         f_in.close()
         os.remove(dest)
+
+import argparse
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument(
+    "-v",
+    "--verbose",
+    action="store_const",
+    dest="loglevel",
+    const=logging.INFO,
+    default=logging.INFO,
+    help="Increase output verbosity",
+)
+
+parser.add_argument(
+    "-vv",
+    "--debug",
+    action="store_const",
+    dest="loglevel",
+    const=logging.DEBUG,
+    default=logging.WARNING,
+    help="Increase output verbosity for debugging",
+)
+
+parser.add_argument(
+    '--conf',
+    type=str,
+    default="config.json",
+    action='append',
+    required=False,
+    help="Config path file name format json. Default: config.json"
+)
+
+parser.add_argument(
+    "-w",
+    "--wrap-limit",
+    type=int,
+    default=1500,
+    required=False,
+    help="Number of characters -including spaces- to wrap a line of text. Default: 50",
+)
+
+parser.add_argument(
+    "-i",
+    "--src-lang",
+    type=str,
+    default="auto",
+    help="Source language. Default: auto",
+)
+
+parser.add_argument(
+    "-o",
+    "--dest-lang",
+    type=str,
+    default="en-US",
+    help="Destination language. Default: en-US (English)",
+)
+
+parser.add_argument(
+    "-p",
+    "--source-filepath",
+    metavar="path",
+    type=str,
+    default='source_srt',
+    help="File to translate",
+)
+
+
+parser.add_argument(
+    "-usr",
+    "--username",
+    type=str,
+    default="viphn8688@gmail.com",
+    help="Username login account.",
+)
+parser.add_argument(
+    "-usrpw",
+    "--userpassword",
+    type=str,
+    default="*Um5h^a6X8VbTn7^",
+    help="Password of account login.",
+)
+parser.add_argument(
+    "-proxys",
+    "--proxy-address",
+    type=List[str],
+    help="List proxy address [ip:port].",
+)
+
+parser.add_argument(
+    "--proxy_required",
+    type=bool,
+    default=False,
+    help="Require using first time.",
+)
+
+
+args=parser.parse_args()
+if args.conf is not None and os.path.isfile(args.conf):
+    with open(args.conf, 'r', encoding='utf-8') as f:
+        parser.set_defaults(**json.load(f))
+
+# Reload arguments to override config file values with command line values
+args = parser.parse_args()
+# /////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(args.loglevel)  # logging.WARNING
+# stdout_handler.setFormatter(formatter)
+
 if not os.path.exists(pathlib.Path('logs').resolve()):
     os.makedirs(pathlib.Path('logs').resolve())
 logHandler = handlers.RotatingFileHandler('logs/application_srt.log', maxBytes=102400, backupCount=100)
@@ -35,14 +145,14 @@ logHandler.rotator = GZipRotator()
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d  %(levelname)s   %(filename)s    %(message)s',
                     datefmt='%H:%M:%S',
-                    level=logging.INFO,
+                    level=args.loglevel,
                     handlers=[stdout_handler, logHandler]
                     )
 logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
 logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-folder = pathlib.Path('source_srt').resolve()
+folder = pathlib.Path(args.source_filepath).resolve()
 list_file = glob.glob(os.path.join(folder, "**/*.srt"), recursive=True)
 if not os.path.exists(folder):
     os.makedirs(folder)
@@ -51,7 +161,7 @@ if not os.path.exists(folder):
 else:
     logger.info(f"Processing translate Folder path :: {folder} size {len(list_file)} file.")
 
-if len(list_file) <1:
+if len(list_file) < 1:
     logger.info(f"Please recheck copy file translate to folder path :: {folder}. No-any file translate.")
     sys.exit(-1)
 
@@ -59,11 +169,23 @@ firefox_profile = pathlib.Path('tmp/firefox_profile').resolve()
 if not os.path.exists(firefox_profile):
     os.makedirs(firefox_profile)
 
-# proxy = create_proxy(country_id=["US", "GB"])
-driver = create_driver()
-# The country ids are the ones in https://www.sslproxies.org/
-# translator = DeeplTranslator(driver, username='nguyentthai96@gmail.com', password='TThais12589')
-translator = DeeplTranslator(driver, username='viphn8688@gmail.com', password='*Um5h^a6X8VbTn7^')
+
+proxy = None
+if args.proxy_required:
+    proxy = create_proxy(country_id=["US", "GB"], proxyAddresses=args.proxy_address)
+driver = create_driver(proxy)
+#
+try:
+    translator = DeeplTranslator(driver, username=args.username, password=args.userpassword)
+    translator.max_char = args.wrap_limit
+    translator.proxy_address = args.proxy_address
+except Exception as e:
+    logger.exception("Error init driver selenium :: ", e)
+    logger.info("Waiting system stop.")
+    if driver is not None:
+        driver.quit()
+    time.sleep(3)
+    sys.exit(-1)
 
 target_datetime = datetime.strptime('2023-08-20 01:50:00', '%Y-%m-%d %H:%M:%S')
 current_datetime = datetime.now()
@@ -84,9 +206,10 @@ failed = 0
 for filepath in list_file:
     try:
         head, tail = os.path.split(filepath)
-        logger.info(f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
+        logger.info(
+            f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
         srt = SrtFile(filepath)
-        srt.translate(translator, "auto", "en-US")
+        srt.translate(translator, args.src_lang, args.dest_lang)
         # srt.wrap_lines()
         srt.join_lines()
         srt.save(os.path.join(pathtranslated, f"{tail}"))
@@ -96,13 +219,28 @@ for filepath in list_file:
     except Exception as e:
         failed += 1
         logger.error(f"File {filepath} failed cannot save file translate (summary: {failed} failed).")
-        logger.error(f"Error process file :: {filepath}  Ex:",e)
-        translator.quit()
-        driver = create_driver()
-        translator = DeeplTranslator(driver, username='viphn8688@gmail.com', password='*Um5h^a6X8VbTn7^')
+        logger.exception(f"Error process file :: {filepath}  Ex:", e)
+        try:
+            if translator is not None:
+                translator.quit()
+            proxy = None
+            if not args.proxy_required:
+                proxy = create_proxy(country_id=["US", "GB"])
+            driver = create_driver(proxy)
+            translator = DeeplTranslator(driver, username=args.username, password=args.userpassword)
+            translator.max_char = args.wrap_limit
+            translator.proxy_address = args.proxy_address
+            if not args.proxy_required:
+                translator.proxy_address = None
+        except Exception as e:
+            logger.exception(f"Retry init for next file (summary: {failed} failed). Exception start driver", e)
+            driver = create_driver()
+            translator = DeeplTranslator(driver, username=args.username, password=args.userpassword)
 
-logger.info(f"====================================================================================================================================")
-logger.info(f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}   ({failed} failed)  _________________")
+logger.info(
+    f"====================================================================================================================================")
+logger.info(
+    f"_________________  Files Translating complete {int(100 * progress / len(list_file))}%   files  numbers {progress}/{len(list_file)}   ({failed} failed)  _________________")
 
 translator.quit()
 time.sleep(5)
