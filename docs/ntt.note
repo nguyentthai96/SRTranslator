@@ -17,3 +17,22 @@ python setup.py install
 
 
 pip install Cython --install-option="--no-cython-compile"
+
+pyinstaller -F -i app.ico .\translator_deepl.py
+
+
+
+
+
+
+
+
+ # C:\Users\<UserName>\AppData\Roaming.
+        # https://www.browserstack.com/automate/capabilities
+        # https://stackoverflow.com/questions/72331816/how-to-connect-to-an-existing-firefox-instance-using-seleniumpython
+        # https://www.minitool.com/news/your-firefox-profile-cannot-be-loaded.html
+        # firefox -p
+        # firefox.exe --new-instance -ProfileManager -marionette -start-debugger-server 2828
+        # firefox.exe -marionette -start-debugger-server 2828
+        # firefox.exe --new-instance -P deepl -marionette
+        # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
