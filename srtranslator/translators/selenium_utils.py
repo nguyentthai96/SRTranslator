@@ -1,9 +1,13 @@
 import json
 import os
 import pathlib
+import pprint
+import random
 import time
 import sys
 import logging
+from urllib.parse import urlparse
+
 import pyperclip
 
 from typing import Optional, List
@@ -16,40 +20,47 @@ from webdriverdownloader import GeckoDriverDownloader
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.proxy import Proxy, ProxyType
+from selenium.webdriver.common.proxy import ProxyType
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver import ActionChains, Keys
+from selenium.webdriver import ActionChains, Keys, Proxy
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver import Firefox, FirefoxOptions, FirefoxProfile
 
 logger = logging.getLogger(__name__)
-def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
+
+
+def create_proxy(country_id: Optional[List[str]] = ["US"],
+                 proxyAddresses: Optional[List[str]] = None) -> Optional:
     """Creates a new proxy to use with a selenium driver and avoid get banned
 
     Args:
         country_id (Optional[List[str]], optional): Contry id to create proxy. Defaults to ['US'].
+        proxyAddresses (Optional[List[str]], optional): list address proxy.
 
     Returns:
         Proxy: Selenium WebDriver proxy
     """
-    logger.info("Getting a new Proxy from https://www.sslproxies.org/")
-    proxy = FreeProxy(country_id=country_id, https=True).get()
-    # proxy = Proxy(
-    #     dict(
-    #         proxyType=ProxyType.MANUAL,
-    #         httpProxy=proxy,
-    #         ftpProxy=proxy,
-    #         sslProxy=proxy,
-    #         noProxy="",
-    #     )
-    # )
 
-    return proxy
+    if proxyAddresses is None:
+        logger.info("Getting a new Proxy from https://www.sslproxies.org/")
+        address = FreeProxy(country_id=country_id, https=True).get()
+        parse = urlparse(address)
+        proxyAddress = f"{parse.hostname}:{parse.port}"
+    else:
+        proxyAddress = random.choice(proxyAddresses)
+
+    [proxyHost, proxyPort] = proxyAddress.split(":")
+
+    return dict(
+        proxyAddress=proxyAddress,
+        proxyHost=proxyHost,
+        proxyPort=int(proxyPort)
+    )
 
 
-def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
+def create_driver(proxy: Optional = None) -> WebDriver:
     """Creates a new Firefox selenium webdriver. Install geckodriver if not in path
 
     Args:
@@ -58,6 +69,54 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     Returns:
         WebDriver: Selenium WebDriver
     """
+    service = Service(log_path='tmp/selenium.log', service_args=[
+        '--log', 'debug',
+        '--profile-root', 'tmp'
+    ])
+    options = webdriver.FirefoxOptions()
+    # only using profile.set_preference profile or options.add_argument
+    options.add_argument("-profile")
+    options.add_argument('tmp/firefox_profile')
+    #
+    options.add_argument("-headless")
+    #
+    # firefox_profile = FirefoxProfile()
+    # firefox_profile.set_preference('profile', 'tmp/firefox_profile')
+    # firefox_profile.set_preference("javascript.enabled", True)
+    # options.profile = firefox_profile
+
+    if proxy is not None:
+        logger.info("Connect with proxy address :: %s", proxy['proxyAddress'])
+        # webdriver.DesiredCapabilities.FIREFOX['proxy'] = Proxy(
+        #     dict(
+        #         proxyType=ProxyType.MANUAL,
+        #         httpProxy=proxy['proxyAddress'],
+        #         ftpProxy=proxy['proxyAddress'],
+        #         sslProxy=proxy['proxyAddress'],
+        #         noProxy="",
+        #     )
+        # )
+        # https://stackoverflow.com/questions/42335857/python-selenium-firefox-proxy-does-not-work
+        # # Direct = 0, Manual = 1, PAC = 2, AUTODETECT = 4, SYSTEM = 5
+        options.set_preference("network.proxy.type", 1)
+        options.set_preference("network.proxy.http", proxy['proxyHost'])
+        options.set_preference("network.proxy.httpProxyAll", True)
+        options.set_preference("network.proxy.http_port", proxy['proxyPort'])
+        # options.set_preference("network.proxy.https", proxy['proxyHost'])
+        # options.set_preference("network.proxy.https_port", proxy['proxyPort'])
+        options.set_preference("network.proxy.share_proxy_settings", True)
+        options.set_preference("network.proxy.ssl", proxy['proxyHost'])
+        options.set_preference("network.proxy.ssl_port", proxy['proxyPort'])
+        options.set_preference("network.proxy.socks", proxy['proxyHost'])
+        options.set_preference("network.proxy.socks_port", proxy['proxyPort'])
+        options.set_preference("network.proxy.socks_version", 5)
+        # no use cannot access page
+        options.set_preference('network.proxy.socks_remote_dns', False)
+        options.set_preference('network.proxy.proxyDNS', False)
+        options.set_preference("network.http.use-cache", False)
+    else:
+        options.set_preference("network.proxy.type", 4)
+
     logger.info("Creating Selenium Webdriver instance")
     try:
         # service = Service(port=3000, service_args=[
@@ -65,21 +124,13 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
         #     '--log', 'debug',
         #     '--profile-root', 'tmp'
         # ])
-        service = Service( service_args=[
-            '--log', 'debug',
-            '--profile-root', 'tmp'
-        ])
-        options = webdriver.FirefoxOptions()
-        options.set_preference('profile', 'tmp/firefox_profile')
-        options.add_argument("-profile")
-        options.add_argument('tmp/firefox_profile')
-        #
-        options.add_argument("-headless")
         #
         driver = webdriver.Firefox(options=options, service=service)
+        driver.get("https://ifconfig.me")
+        driver.save_screenshot("check_ip.png")
     except WebDriverException as e:
         logger.info("Installing Firefox GeckoDriver cause it isn't installed")
-        logging.exception("WebDriverException", e, exc_info=True)
+        logging.exception("WebDriverException", e)
         gdd = GeckoDriverDownloader()
         gdd.download_and_install()
 
@@ -92,8 +143,11 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
         # firefox.exe -marionette -start-debugger-server 2828
         # firefox.exe --new-instance -P deepl -marionette
         # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
-        driver = webdriver.Firefox()
+        # https://github.com/aiworkplace/Selenium-Project
+        driver = webdriver.Firefox(options=options, service=service)
 
+    profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
+    logger.info("Profile name of Firefox running :: %s", profile_name)
     driver.maximize_window()
     return driver
 
