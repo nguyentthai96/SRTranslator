@@ -3,7 +3,7 @@ import logging
 import timeit
 import pickle
 
-from typing import Optional
+from typing import Optional, List
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.proxy import Proxy
 from selenium.webdriver.remote.webelement import WebElement
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class DeeplTranslator(Translator):
     url = "https://www.deepl.com/translator"
     max_char = 8000
+    proxy_address:List[str] = None
     languages = {
         "auto": "Any language (detect)",
         "bg": "Bulgarian",
@@ -75,12 +76,11 @@ class DeeplTranslator(Translator):
     def _reset(self):
         logger.info(f"Going to {self.url}")
         self.driver.get(self.url)
-        self._closePopUp()
         #
         try:
             self._set_login(self.username, self.password)
         except Exception as e:
-            logger.info(f"Error exception login :: error ", e)
+            logger.exception(f"Error exception login :: error ", e)
 
         self._closePopUp()
 
@@ -96,11 +96,11 @@ class DeeplTranslator(Translator):
 
     def _rotate_proxy(self):
         if self.driver is not None:
-            logger.info(" ======= Translation failed. Probably got banned. ======= ")
+            logger.warning(" ======= Translation failed. Probably got banned. ======= ")
             logger.info("Rotating proxy")
             self.quit()
 
-        proxy = create_proxy()
+        proxy = create_proxy(proxyAddresses=self.proxy_address)
         self.driver = create_driver(proxy)
         self._reset()
 
@@ -136,8 +136,9 @@ class DeeplTranslator(Translator):
         Button(self.driver, "XPATH", xpath).click()
 
     def _set_login(self, username: str, password: str) -> None:
-        time.sleep(15)
-        user_logged = WebDriverWait(self.driver, 8).until(
+        time.sleep(6)
+        logger.info("Checking login username.")
+        user_logged = WebDriverWait(self.driver, 45).until(
             EC.presence_of_element_located(
                 (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
         )
@@ -147,7 +148,7 @@ class DeeplTranslator(Translator):
             self.username_current = None
         logger.info(f"Username current login :: {self.username_current}")
         if len(self.username_current) > 0 > self.username_current.find(username):
-            logger.info(f"Username existed logout user current {self.username_current}")
+            logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
             # data-testid="menu-account-logout" Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
             self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
             time.sleep(5)
@@ -157,7 +158,7 @@ class DeeplTranslator(Translator):
 
         button_login = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-out-btn']")
         button_login.click()
-        time.sleep(10)
+        time.sleep(8)
         input_email = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-username']")
         input_email.write(username)
         input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
@@ -165,15 +166,15 @@ class DeeplTranslator(Translator):
 
         button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
         button_submit.click()
-        time.sleep(15)
+        time.sleep(5)
         #
         notification = BaseElement(self.driver, "XPATH", f"//div[@data-testid='error-notification']", optional=True)
         if notification.element:
-            logging.error(f"Check login status :: {notification.element.text}")
-            logging.error(f"==========================================================================================")
+            logger.error(f"Check login status :: {notification.element.text}")
+            logger.error(f"==========================================================================================")
         else:
             time.sleep(3)
-            user_logged = WebDriverWait(self.driver, 5).until(
+            user_logged = WebDriverWait(self.driver, 45).until(
                 EC.presence_of_element_located(
                     (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
             )
@@ -205,13 +206,12 @@ class DeeplTranslator(Translator):
                 self._set_destination_language(destination_language)
 
             clean_text = text.replace("[...]", "~|@[.]@|~")
-            logging.debug(f"TIME SET lang {timeit.default_timer() - start}")
             self.input_lang_from.write(value=(clean_text), is_clipboard=True)
-            logging.debug(f"TIME SET source {timeit.default_timer() - start}")
+            logger.debug(f"TIME SET source {timeit.default_timer() - start}")
         except Exception as e:
-            logging.warning("Error catch exception element.........................................................", e)
+            logger.warning("Error catch exception element.........................................................", e)
 
-        time.sleep(5)
+        time.sleep(6)
         # Maximun number of iterations 60 seconds
         for _ in range(25):
             try:
@@ -224,7 +224,7 @@ class DeeplTranslator(Translator):
                     return translation.replace("~|@[.]@|~", "[...]")
                 time.sleep(2)
             except Exception as e:
-                logging.warning("Error catch exception.............................................................", e)
+                logger.warning("Error catch exception.............................................................", e)
 
         # Maybe proxy got banned, so we try with a new proxy, but just once.
         if not self.last_translation_failed:  # failing, see_ing default is failing but first time not failed
@@ -237,6 +237,3 @@ class DeeplTranslator(Translator):
 
     def quit(self):
         self.driver.quit()
-
-    def retry(self):
-        self._rotate_proxy()
