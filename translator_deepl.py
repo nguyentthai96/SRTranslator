@@ -152,6 +152,8 @@ logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
 logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
+logger.info("Application Starting Version :: 202308060000 - product ver full optimize time.")
+
 folder = pathlib.Path(args.source_filepath).resolve()
 list_file = glob.glob(os.path.join(folder, "**/*.srt"), recursive=True)
 if not os.path.exists(folder):
@@ -187,11 +189,7 @@ except Exception as e:
     time.sleep(3)
     sys.exit(-1)
 
-target_datetime = datetime.strptime('2023-08-20 01:50:00', '%Y-%m-%d %H:%M:%S')
-current_datetime = datetime.now()
-if current_datetime > target_datetime:
-    print("Error - The current date and time are after the target date.")
-    sys.exit(-1111)
+
 start = timeit.default_timer()
 pathtranslated = pathlib.Path('translated').resolve()
 source_completed = pathlib.Path('source_completed').resolve()
