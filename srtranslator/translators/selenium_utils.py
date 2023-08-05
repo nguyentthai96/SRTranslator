@@ -126,8 +126,6 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         # ])
         #
         driver = webdriver.Firefox(options=options, service=service)
-        driver.get("https://ifconfig.me")
-        driver.save_screenshot("check_ip.png")
     except WebDriverException as e:
         logger.info("Installing Firefox GeckoDriver cause it isn't installed")
         logging.exception("WebDriverException", e)
@@ -146,8 +144,11 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         # https://github.com/aiworkplace/Selenium-Project
         driver = webdriver.Firefox(options=options, service=service)
 
-    profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
-    logger.info("Profile name of Firefox running :: %s", profile_name)
+    if logger.isEnabledFor(logging.DEBUG):
+        driver.get("https://ifconfig.me")
+        driver.save_screenshot("check_ip.png")
+        profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
+        logger.info("Profile name of Firefox running :: %s", profile_name)
     driver.maximize_window()
     return driver
 
