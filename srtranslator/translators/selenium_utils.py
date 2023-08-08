@@ -69,10 +69,16 @@ def create_driver(proxy: Optional = None) -> WebDriver:
     Returns:
         WebDriver: Selenium WebDriver
     """
-    service = Service(log_path='tmp/selenium.log', service_args=[
-        '--log', 'debug',
-        '--profile-root', 'tmp'
-    ])
+    # firefox -marionette -start-debugger-server 2828
+    service = Service(
+        # executable_path='/home/nguyentthai96/webdriver',
+        # port=3000,
+        log_path='tmp/selenium.log', service_args=[
+            # '--marionette-port', '2828', '--connect-existing',
+            '--log', 'debug',
+            '--profile-root', 'tmp'
+        ]
+    )
     options = webdriver.FirefoxOptions()
     # only using profile.set_preference profile or options.add_argument
     options.add_argument("-profile")
@@ -119,12 +125,6 @@ def create_driver(proxy: Optional = None) -> WebDriver:
 
     logger.info("Creating Selenium Webdriver instance")
     try:
-        # service = Service(port=3000, service_args=[
-        #     '--marionette-port', '2828', '--connect-existing',
-        #     '--log', 'debug',
-        #     '--profile-root', 'tmp'
-        # ])
-        #
         driver = webdriver.Firefox(options=options, service=service)
     except WebDriverException as e:
         logger.info("Installing Firefox GeckoDriver cause it isn't installed")
