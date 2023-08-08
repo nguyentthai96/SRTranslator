@@ -210,7 +210,9 @@ for filepath in list_file:
         srt.translate(translator, args.src_lang, args.dest_lang)
         # srt.wrap_lines()
         srt.join_lines()
-        srt.save(os.path.join(pathtranslated, f"{tail}"))
+
+        filename, file_extension = os.path.splitext(tail)
+        srt.save(os.path.join(pathtranslated, f"{filename}_{args.dest_lang}{file_extension}"))
         print(f"{tail}  with time {timeit.default_timer() - start}")
         shutil.move(filepath, os.path.join(source_completed, f"{tail}"))
         progress += 1

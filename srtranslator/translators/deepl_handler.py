@@ -158,7 +158,7 @@ class DeeplTranslator(Translator):
 
         button_login = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-out-btn']")
         button_login.click()
-        time.sleep(8)
+        time.sleep(4)
         input_email = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-username']")
         input_email.write(username)
         input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
