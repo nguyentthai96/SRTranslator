@@ -102,15 +102,16 @@ class SrtFile:
         import codecs
         for sub in subtitles:
             sub.content = cleanr.sub("", sub.content)
-            sub.content = srt.make_legal_content(sub.content)
             sub.content = sub.content.strip() \
                 .replace('（', "(")\
                 .replace('）', ")")\
                 .replace("\\n", "\n")\
                 .replace("\\N", "\n")\
                 .replace("\\ ", "\n")\
+                .replace("\\", "\n")\
                 .replace("\\ n", "\n")\
                 .replace("\\ N", "\n") # "\n", "\N", "\ ", "\ N", "\ n"
+            sub.content = srt.make_legal_content(sub.content)
 
             if sub.content == "":
                 sub.content = "..."
@@ -120,7 +121,7 @@ class SrtFile:
             #     continue
 
             # NTT sub.content = sub.content.replace("\n", " ")
-            sub.content = list(sub.content.split("\n"))
+            sub.content = list(sub.content.strip().split("\n"))
 
         return subtitles
 
