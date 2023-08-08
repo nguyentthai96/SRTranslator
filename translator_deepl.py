@@ -152,7 +152,7 @@ logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
 logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-logger.info("Application Starting Version :: 202308060000 - product ver full optimize time.")
+logger.info("Application Starting Version :: 202308080000 - product ver full optimize time.")
 
 folder = pathlib.Path(args.source_filepath).resolve()
 list_file = glob.glob(os.path.join(folder, "**/*.srt"), recursive=True)
