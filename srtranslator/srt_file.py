@@ -103,6 +103,8 @@ class SrtFile:
         for sub in subtitles:
             sub.content = cleanr.sub("", sub.content)
             sub.content = sub.content.strip() \
+                .replace("'", "")\
+                .replace("`", "")\
                 .replace('（', "(")\
                 .replace('）', ")")\
                 .replace("\\n", "\n")\
