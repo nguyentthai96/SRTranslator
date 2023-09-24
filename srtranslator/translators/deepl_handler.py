@@ -136,7 +136,7 @@ class DeeplTranslator(Translator):
         Button(self.driver, "XPATH", xpath).click()
 
     def _set_login(self, username: str, password: str) -> None:
-        time.sleep(4)
+        time.sleep(8)
         logger.info("Checking login username.")
         user_logged = WebDriverWait(self.driver, 60).until(
             EC.presence_of_element_located(
@@ -163,7 +163,7 @@ class DeeplTranslator(Translator):
         input_email.write(username)
         input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
         input_password.write(password)
-
+        logger.info("Enter login submit!")
         button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
         button_submit.click()
         time.sleep(5)
@@ -173,7 +173,7 @@ class DeeplTranslator(Translator):
             logger.error(f"Check login status :: {notification.element.text}")
             logger.error(f"==========================================================================================")
         else:
-            time.sleep(3)
+            time.sleep(8)
             user_logged = WebDriverWait(self.driver, 45).until(
                 EC.presence_of_element_located(
                     (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
