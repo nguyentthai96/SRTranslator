@@ -124,6 +124,13 @@ parser.add_argument(
 )
 
 
+parser.add_argument(
+    "-s",
+    "--show-browser",
+    action="store_true",
+    help="Show browser window",
+)
+
 args=parser.parse_args()
 if args.conf is not None and os.path.isfile(args.conf):
     with open(args.conf, 'r', encoding='utf-8') as f:
@@ -132,6 +139,16 @@ if args.conf is not None and os.path.isfile(args.conf):
 # Reload arguments to override config file values with command line values
 args = parser.parse_args()
 # /////////////////////////////////////////////////////////////////////////////////////////////////
+
+#
+try:
+    os.environ.pop("MOZ_HEADLESS")
+except:
+    pass
+if not args.show_browser:
+    os.environ["MOZ_HEADLESS"] = "1"
+# else:
+#     os.environ["MOZ_HEADLESS"] = "0"
 
 
 stdout_handler = logging.StreamHandler(sys.stdout)

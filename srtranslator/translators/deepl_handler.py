@@ -14,6 +14,8 @@ from .base import Translator, TimeOutException
 from .selenium_utils import (
     create_proxy,
     create_driver,
+)
+from .selenium_components import (
     TextArea,
     Button,
     Text, BaseElement,
@@ -211,7 +213,7 @@ class DeeplTranslator(Translator):
         except Exception as e:
             logger.warning("Error catch exception element.........................................................", e)
 
-        time.sleep(6)
+        time.sleep(7)
         # Maximun number of iterations 60 seconds
         for _ in range(25):
             try:
