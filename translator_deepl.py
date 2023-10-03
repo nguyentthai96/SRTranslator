@@ -183,7 +183,7 @@ logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
 logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-logger.info("Application Starting Version :: 202308160000 - product ver full clean chars.")
+logger.info("Application Starting Version :: 20231004 - product new version ui deepl")
 
 
 #
