@@ -45,6 +45,8 @@ def create_proxy(country_id: Optional[List[str]] = ["US"],
     Returns:
         Proxy: Selenium WebDriver proxy
     """
+    if os.getenv("DISABLE_PROXY"): # have data or "1" return None as disable proxy
+        return None
 
     if proxyAddresses is None:
         logger.info("Getting a new Proxy from https://www.sslproxies.org/")
@@ -75,30 +77,36 @@ def create_driver(proxy: Optional = None) -> WebDriver:
 
     # firefox -marionette -start-debugger-server 2828
 
-    BROWSER:str = os.getenv('BROWSERS')
+    BROWSERS_TYPE:str = os.getenv('BROWSERS_TYPE')
     user_agent = random.choice(user_agents)
-    if 'firefox' == BROWSER.lower():
+    if 'firefox' == BROWSERS_TYPE.lower():
+        pathProfile = 'FirefoxProfile'
+        firefox_profile = pathlib.Path(pathProfile).resolve()
+
         service = webdriver.firefox.service.Service(
             # executable_path='/home/nguyentthai96/webdriver',
             # port=3000,
             service_args=[
                 # '--marionette-port', '2828', '--connect-existing',
                 '--log', 'debug',
-                '--profile-root', 'tmp'
+                '--profile-root', pathProfile
             ],
             log_path='logs/selenium.log',
         )
 
+        if not os.path.exists(firefox_profile):
+            os.makedirs(firefox_profile)
+
         options = webdriver.FirefoxOptions()
         # only using profile.set_preference profile or options.add_argument
         options.add_argument("-profile")
-        options.add_argument('FirefoxProfile')
+        options.add_argument(pathProfile)
         #
-        if os.environ["MOZ_HEADLESS"]:
+        if os.getenv("MOZ_HEADLESS"):
             options.add_argument("-headless")
 
-        options.add_argument(f'user-agent={user_agent}')
-        options.set_preference("general.useragent.override", f'userAgent={user_agent}')
+        # options.add_argument(f'user-agent={user_agent}')
+        # options.set_preference("general.useragent.override", f'userAgent={user_agent}')
         #
         # firefox_profile = FirefoxProfile()
         # firefox_profile.set_preference('profile', 'tmp/firefox_profile')
@@ -161,9 +169,9 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         if logger.isEnabledFor(logging.DEBUG):
             driver.get("https://ifconfig.me")
             driver.save_screenshot("check_ip.png")
-            agent = driver.execute_script("return navigator.userAgent")
-            profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
-            logger.info("Profile name of Firefox running :: %s  agent %s", profile_name, agent)
+            # agent = driver.execute_script("return navigator.userAgent")
+            # profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
+            # logger.info("Profile name of Firefox running :: %s  agent %s", profile_name, agent)
         driver.maximize_window()
         return driver
 
@@ -178,7 +186,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         log_path='logs/selenium.log'
     )
     options = webdriver.ChromeOptions()
-    if os.environ["MOZ_HEADLESS"]:
+    if os.getenv("MOZ_HEADLESS"):
         options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     #

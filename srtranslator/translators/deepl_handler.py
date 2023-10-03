@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 import timeit
@@ -79,18 +80,19 @@ class DeeplTranslator(Translator):
         logger.info(f"Going to {self.url}")
         self.driver.get(self.url)
         #
-        try:
-            self._set_login(self.username, self.password)
-        except Exception as e:
-            logger.exception(f"Error exception login :: error ", e)
+        if os.getenv("LOGIN_AUTO"):
+            try:
+                self._set_login(self.username, self.password)
+            except Exception as e:
+                logger.exception(f"Error exception login :: error ", e)
 
         self._closePopUp()
 
         self.input_lang_from = TextArea(
-            self.driver, "CLASS_NAME", "lmt__source_textarea"
+            self.driver, "XPATH",f"//d-textarea[@aria-labelledby='translation-source-heading']" # @data-testid='translator-source-input'
         )
         self.input_destination_language = TextArea(
-            self.driver, "CLASS_NAME", "lmt__target_textarea"
+            self.driver, "XPATH",f"//d-textarea[@aria-labelledby='translation-target-heading']"
         )
 
         self.src_lang = None
@@ -111,21 +113,21 @@ class DeeplTranslator(Translator):
             self.driver,
             "CSS_SELECTOR",
             "[aria-label=Close]",
-            wait_time=5,
+            #wait_time=50,
             optional=True,
         ).click()
 
     def _set_source_language(self, language: str) -> None:
-        self._set_language(language, "lmt__language_select--source")
+        self._set_language(language, "//button[@data-testid='translator-source-lang-btn']")
         self.src_lang = language
 
     def _set_destination_language(self, language: str) -> None:
-        self._set_language(language, "lmt__language_select--target")
+        self._set_language(language, "//button[@data-testid='translator-target-lang-btn']")
         self.target_lang = language
 
     def _set_language(self, language: str, dropdown_class: str) -> None:
         # Click the languages dropdown button
-        Button(self.driver, "CLASS_NAME", dropdown_class).click()
+        Button(self.driver, "XPATH", dropdown_class).click()
 
         # Get the language button to click based on is dl-test property or the text in the button
         xpath_by_property = (
@@ -140,22 +142,27 @@ class DeeplTranslator(Translator):
     def _set_login(self, username: str, password: str) -> None:
         time.sleep(8)
         logger.info("Checking login username.")
-        user_logged = WebDriverWait(self.driver, 60).until(
-            EC.presence_of_element_located(
-                (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
-        )
-        if user_logged:
-            self.username_current = user_logged.text
-        else:
+        user_logged = None
+        try:
+            #find_element = self.driver.find_elements if multiple else self.driver.find_element
+            #self.element = find_element((By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
+            user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']", optional=True)
+            if user_logged and user_logged.element:
+                self.username_current = user_logged.element.text
+            else:
+                self.username_current = None
+        except:
+            logger.info("Checking login failed.")
             self.username_current = None
         logger.info(f"Username current login :: {self.username_current}")
-        if len(self.username_current) > 0 > self.username_current.find(username):
+        if self.username_current is not None and ( len(self.username_current) > 0 > self.username_current.find(username)): # login others
             logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
+            user_logged.click()
             # data-testid="menu-account-logout" Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
             self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
             time.sleep(5)
             self._closePopUp()
-        elif len(self.username_current) > 0 and self.username_current.find(username) >= 0:
+        elif self.username_current is not None and (len(self.username_current) > 0 and self.username_current.find(username) >= 0): # login same
             return
 
         button_login = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-out-btn']")
@@ -176,14 +183,18 @@ class DeeplTranslator(Translator):
             logger.error(f"==========================================================================================")
         else:
             time.sleep(8)
-            user_logged = WebDriverWait(self.driver, 45).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
-            )
-            if user_logged:
-                self.username_current = user_logged.text
-            else:
+            try:
+                user_logged = WebDriverWait(self.driver, 60).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
+                )
+                if user_logged:
+                    self.username_current = user_logged.text
+                else:
+                    self.username_current = None
+            except:
                 self.username_current = None
+
             logger.info(f"Now login with username :: {self.username_current}")
 
     def _is_translated(self, original: str, translation: str) -> bool:

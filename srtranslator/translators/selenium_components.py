@@ -49,16 +49,21 @@ class BaseElement:
                 lambda driver: EC.element_to_be_clickable(locator)
             )
             self.element = find_element(*locator)
+            return
+        except Exception as er:
+            if optional:
+                self.element = None
+                return
+            logger.info(f"Exception :: {er}")
         except:
             if optional:
                 self.element = None
                 return
-
-            print(f"Timed out trying to get element ({locate_by} = {locate_value})")
-            logging.warning(f"Timed out trying to get element ({locate_by} = {locate_value})")
-            logger.info("Closing browser")
-            driver.quit()
-            sys.exit()
+        print(f"Timed out trying to get element ({locate_by} = {locate_value})")
+        logging.warning(f"Timed out trying to get element ({locate_by} = {locate_value})")
+        logger.info("Closing browser")
+        driver.quit()
+        sys.exit()
 
 
 class Text(BaseElement):

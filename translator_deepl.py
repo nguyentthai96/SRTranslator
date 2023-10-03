@@ -123,12 +123,34 @@ parser.add_argument(
     help="Require using first time.",
 )
 
+parser.add_argument(
+    "--proxy_disable",
+    type=bool,
+    default=True,
+    help="Disable proxy all.",
+)
 
 parser.add_argument(
-    "-s",
-    "--show-browser",
-    action="store_true",
-    help="Show browser window",
+    "-hidden",
+    "--hidden-browser",
+    action="store_false",
+    help="Hidden background browser window",
+)
+
+parser.add_argument(
+    "-browser",
+    "--type-browser",
+    type=str,
+    default="firefox",
+    help="Browser type firefox or chrome, default firefox.",
+)
+
+
+parser.add_argument(
+    "--login_manual",
+    type=bool,
+    default=True,
+    help="False is auto login.",
 )
 
 args=parser.parse_args()
@@ -140,15 +162,7 @@ if args.conf is not None and os.path.isfile(args.conf):
 args = parser.parse_args()
 # /////////////////////////////////////////////////////////////////////////////////////////////////
 
-#
-try:
-    os.environ.pop("MOZ_HEADLESS")
-except:
-    pass
-if not args.show_browser:
-    os.environ["MOZ_HEADLESS"] = "1"
-# else:
-#     os.environ["MOZ_HEADLESS"] = "0"
+
 
 
 stdout_handler = logging.StreamHandler(sys.stdout)
@@ -171,6 +185,27 @@ logger = logging.getLogger(__name__)
 
 logger.info("Application Starting Version :: 202308160000 - product ver full clean chars.")
 
+
+#
+try:
+    os.environ.pop("MOZ_HEADLESS") # DISABLE_PROXY BROWSERS_TYPE LOGIN_AUTO
+
+
+    if args.proxy_disable:
+        os.environ["DISABLE_PROXY"] = "1"
+    if args.hidden_browser:
+        os.environ["MOZ_HEADLESS"] = "1" # MOZ_HEADLESS hidden browser using -headless
+
+    os.environ["BROWSERS_TYPE"] = args.type_browser
+    if not args.login_manual:
+        os.environ["LOGIN_AUTO"] = "1"
+except  Exception as error:
+    logger.info("Exception parse :: {}", error)
+
+# else:
+#     os.environ["MOZ_HEADLESS"] = "0"
+
+
 folder = pathlib.Path(args.source_filepath).resolve()
 list_file = glob.glob(os.path.join(folder, "**/*.srt"), recursive=True)
 if not os.path.exists(folder):
@@ -184,9 +219,6 @@ if len(list_file) < 1:
     logger.info(f"Please recheck copy file translate to folder path :: {folder}. No-any file translate.")
     sys.exit(-1)
 
-firefox_profile = pathlib.Path('tmp/firefox_profile').resolve()
-if not os.path.exists(firefox_profile):
-    os.makedirs(firefox_profile)
 
 
 proxy = None
@@ -209,7 +241,7 @@ except Exception as e:
 
 start = timeit.default_timer()
 pathtranslated = pathlib.Path('translated').resolve()
-source_completed = pathlib.Path('source_completed').resolve()
+source_completed = pathlib.Path('source_srt/source_completed').resolve()
 
 if not os.path.exists(pathtranslated):
     os.makedirs(pathtranslated)
