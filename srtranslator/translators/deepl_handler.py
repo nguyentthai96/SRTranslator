@@ -5,6 +5,8 @@ import timeit
 import pickle
 
 from typing import Optional, List
+
+from selenium.webdriver import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.proxy import Proxy
 from selenium.webdriver.remote.webelement import WebElement
@@ -199,7 +201,6 @@ class DeeplTranslator(Translator):
     def _is_translated(self, original: str, translation: str) -> bool:
         if (
                 len(translation) != 0
-                and "[...]" not in translation
                 and len(original.splitlines()) == len(translation.splitlines())
                 and original != translation
         ):
@@ -217,23 +218,46 @@ class DeeplTranslator(Translator):
             if destination_language != self.target_lang:
                 self._set_destination_language(destination_language)
 
-            clean_text = text.replace("[...]", "~|@[.]@|~")
-            self.input_lang_from.write(value=(clean_text), is_clipboard=True)
+            if logger.isEnabledFor(logging.NOTSET): # https://stackoverflow.com/questions/42900214/how-to-download-a-html-webpage-using-selenium-with-python
+                self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}.png")
+                with open(f"{self.src_lang}_{self.target_lang}_{start}.html", "w", encoding='utf-8') as f:
+                    f.write(self.driver.page_source)
+            self.input_lang_from.write(value=(text), is_clipboard=True)
             logger.debug(f"TIME SET source {timeit.default_timer() - start}")
         except Exception as e:
             logger.warning("Error catch exception element.........................................................", e)
 
-        time.sleep(8)
+        try:
+            time.sleep(2)
+            for j in range(15):
+                progress = BaseElement(self.driver, "XPATH", f"//span[@id='translator-progress-description']", optional=True)
+                if progress and progress.element:
+                    time.sleep(2)
+                else:
+                    break
+        except:
+            pass
+
+        if logger.isEnabledFor(logging.NOTSET):
+            self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}_after_waiting.png")
+            with open(f"{self.src_lang}_{self.target_lang}_{start}_after_waiting.html", "w", encoding='utf-8') as f:
+                f.write(self.driver.page_source)
         # Maximun number of iterations 60 seconds
-        for _ in range(25):
+        for _ in range(20):
             try:
                 translation = self.input_destination_language.value
                 print(f"translation output ::{_}: {timeit.default_timer() - start}")
 
-                if self._is_translated(clean_text, translation):
+                if self._is_translated(text, translation):
                     # Reset the proxy flag -- is success - last not failed
                     self.last_translation_failed = False
-                    return translation.replace("~|@[.]@|~", "[...]")
+                    try:
+                        self.driver.find_element(By.TAG_NAME,'body').send_keys(Keys.CONTROL + Keys.HOME)
+                        # self.driver.execute_script("window.scrollBy(0,document.body.scrollHeight)")
+                    except:
+                        logger.info("Exception throw scroll by HOME")
+                    return translation
+
                 time.sleep(2)
             except Exception as e:
                 logger.warning("Error catch exception.............................................................", e)
