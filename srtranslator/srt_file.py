@@ -196,7 +196,7 @@ class SrtFile:
 
         # For each chunk of the file (based on the translator capabilities)
         for subs_slice in self._get_next_chunk(translator.max_char):
-            logger.info(f"... Waiting translating... {int(100 * progress / self.length)} %")
+            logger.info(f"......Waiting batch translating............ {int(100 * progress / self.length)} %")
 
             # Put chunk in a single text with break lines
             # text = [sub.content for sub in subs_slice]
@@ -230,7 +230,7 @@ class SrtFile:
 
             progress += len(subs_slice)
 
-        print(f"..................................................................................... Translation done")
+        print(f"..................................................................................... TRANSLATION DONE")
 
     def save(self, filepath: str) -> None:
         """Saves SRT to file
