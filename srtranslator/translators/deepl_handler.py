@@ -186,8 +186,8 @@ class DeeplTranslator(Translator):
             time.sleep(8)
             try:
                 user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']", optional=True)
-                if user_logged:
-                    self.username_current = user_logged.text
+                if user_logged and user_logged.element:
+                    self.username_current = user_logged.element.text
                 else:
                     self.username_current = None
             except:
