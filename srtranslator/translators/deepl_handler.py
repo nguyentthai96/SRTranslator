@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class DeeplTranslator(Translator):
     url = "https://www.deepl.com/translator"
-    max_char = 8000
+    max_char = 3000
     proxy_address:List[str] = None
     languages = {
         "auto": "Any language (detect)",
