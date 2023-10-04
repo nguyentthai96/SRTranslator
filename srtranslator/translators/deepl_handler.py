@@ -158,7 +158,7 @@ class DeeplTranslator(Translator):
         if self.username_current is not None and ( len(self.username_current) > 0 > self.username_current.find(username)): # login others
             logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
             user_logged.click()
-            # data-testid="menu-account-logout" Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
+            Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']").click()
             self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
             time.sleep(5)
             self._closePopUp()
