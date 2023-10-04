@@ -89,10 +89,10 @@ class DeeplTranslator(Translator):
         self._closePopUp()
 
         self.input_lang_from = TextArea(
-            self.driver, "XPATH",f"//d-textarea[@aria-labelledby='translation-source-heading']" # @data-testid='translator-source-input'
+            self.driver, "XPATH",f"//d-textarea[@data-testid='translator-source-input']" # @data-testid='translator-source-input'  @aria-labelledby='translation-source-heading'
         )
         self.input_destination_language = TextArea(
-            self.driver, "XPATH",f"//d-textarea[@aria-labelledby='translation-target-heading']"
+            self.driver, "XPATH",f"//d-textarea[@data-testid='translator-target-input']"
         )
 
         self.src_lang = None
@@ -138,6 +138,7 @@ class DeeplTranslator(Translator):
 
         # Click the wanted language button
         Button(self.driver, "XPATH", xpath).click()
+
 
     def _set_login(self, username: str, password: str) -> None:
         time.sleep(8)
