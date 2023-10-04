@@ -101,6 +101,8 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         # only using profile.set_preference profile or options.add_argument
         options.add_argument("-profile")
         options.add_argument(pathProfile)
+        options.add_argument("--width=1920")
+        options.add_argument("--height=1080")
         #
         if os.getenv("MOZ_HEADLESS"):
             options.add_argument("-headless")
@@ -169,9 +171,9 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         if logger.isEnabledFor(logging.DEBUG):
             driver.get("https://ifconfig.me")
             driver.save_screenshot("check_ip.png")
-            # agent = driver.execute_script("return navigator.userAgent")
-            # profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
-            # logger.info("Profile name of Firefox running :: %s  agent %s", profile_name, agent)
+            agent = driver.execute_script("return navigator.userAgent")
+            profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
+            logger.info("Profile name of Firefox running :: %s  agent %s", profile_name, agent)
         driver.maximize_window()
         return driver
 
