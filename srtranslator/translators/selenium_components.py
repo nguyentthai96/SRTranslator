@@ -6,6 +6,7 @@ import random
 import time
 import sys
 import logging
+import timeit
 from urllib.parse import urlparse
 
 import pyperclip
@@ -63,7 +64,7 @@ class BaseElement:
         logging.warning(f"Timed out trying to get element ({locate_by} = {locate_value})")
         logger.info("Closing browser")
         driver.quit()
-        sys.exit()
+        # sys.exit()
 
 
 class Text(BaseElement):
