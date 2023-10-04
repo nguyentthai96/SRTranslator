@@ -254,7 +254,7 @@ for filepath in list_file:
     try:
         head, tail = os.path.split(filepath)
         logger.info(
-            f"......... Files Translating {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
+            f"......... FILES TRANSLATING {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
         srt = SrtFile(filepath)
         srt.translate(translator, args.src_lang, args.dest_lang)
         # srt.wrap_lines()
