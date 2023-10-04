@@ -223,7 +223,7 @@ class DeeplTranslator(Translator):
         except Exception as e:
             logger.warning("Error catch exception element.........................................................", e)
 
-        time.sleep(7)
+        time.sleep(8)
         # Maximun number of iterations 60 seconds
         for _ in range(25):
             try:
