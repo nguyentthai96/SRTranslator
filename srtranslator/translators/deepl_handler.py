@@ -157,10 +157,11 @@ class DeeplTranslator(Translator):
         logger.info(f"Username current login :: {self.username_current}")
         if self.username_current is not None and ( len(self.username_current) > 0 > self.username_current.find(username)): # login others
             logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
-            user_logged.click()
-            Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']").click()
-            self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
-            time.sleep(5)
+            user_logged.click() # Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']").click()
+            time.sleep(3)
+            Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
+            # self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
+            time.sleep(6)
             self._closePopUp()
         elif self.username_current is not None and (len(self.username_current) > 0 and self.username_current.find(username) >= 0): # login same
             return
@@ -184,10 +185,7 @@ class DeeplTranslator(Translator):
         else:
             time.sleep(8)
             try:
-                user_logged = WebDriverWait(self.driver, 60).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
-                )
+                user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']", optional=True)
                 if user_logged:
                     self.username_current = user_logged.text
                 else:
