@@ -241,7 +241,7 @@ except Exception as e:
 
 start = timeit.default_timer()
 pathtranslated = pathlib.Path('translated').resolve()
-source_completed = pathlib.Path('source_srt/source_completed').resolve()
+source_completed = pathlib.Path('source_completed').resolve()
 
 if not os.path.exists(pathtranslated):
     os.makedirs(pathtranslated)
