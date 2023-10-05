@@ -228,12 +228,18 @@ class DeeplTranslator(Translator):
             logger.warning("Error catch exception element.........................................................", e)
 
         try:
-            time.sleep(2)
-            for j in range(15):
-                progress = BaseElement(self.driver, "XPATH", f"//span[@id='translator-progress-description']", optional=True)
+            time.sleep(4)
+            for j in range(10):
+                progress = BaseElement(self.driver,"XPATH", f"//*[@id='translator-progress-description']", optional=True)
+                if logger.isEnabledFor(logging.NOTSET):
+                    self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}___progress_{j}.png")
+                    with open(f"{self.src_lang}_{self.target_lang}_{start}____progress_{j}.html", "w", encoding='utf-8') as f:
+                        f.write(self.driver.page_source)
+                time.sleep(1)
                 if progress and progress.element:
                     time.sleep(2)
-                else:
+                    print("*")
+                if progress is None:
                     break
         except:
             pass
@@ -243,7 +249,7 @@ class DeeplTranslator(Translator):
             with open(f"{self.src_lang}_{self.target_lang}_{start}_after_waiting.html", "w", encoding='utf-8') as f:
                 f.write(self.driver.page_source)
         # Maximun number of iterations 60 seconds
-        for _ in range(20):
+        for _ in range(10):
             try:
                 translation = self.input_destination_language.value
                 print(f"translation output ::{_}: {timeit.default_timer() - start}")
@@ -252,8 +258,8 @@ class DeeplTranslator(Translator):
                     # Reset the proxy flag -- is success - last not failed
                     self.last_translation_failed = False
                     try:
+                        time.sleep(2)
                         self.driver.find_element(By.TAG_NAME,'body').send_keys(Keys.CONTROL + Keys.HOME)
-                        # self.driver.execute_script("window.scrollBy(0,document.body.scrollHeight)")
                     except:
                         logger.info("Exception throw scroll by HOME")
                     return translation

@@ -101,8 +101,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         # only using profile.set_preference profile or options.add_argument
         options.add_argument("-profile")
         options.add_argument(pathProfile)
-        options.add_argument("--width=1920")
-        options.add_argument("--height=1080")
+
         #
         if os.getenv("MOZ_HEADLESS"):
             options.add_argument("-headless")
