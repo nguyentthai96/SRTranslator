@@ -148,7 +148,7 @@ class DeeplTranslator(Translator):
         user_logged = None
         try:
             #find_element = self.driver.find_elements if multiple else self.driver.find_element
-            #self.element = find_element((By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
+            # self.element = find_element((By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
             user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']", optional=True)
             if user_logged and user_logged.element:
                 self.username_current = user_logged.element.text
@@ -211,6 +211,8 @@ class DeeplTranslator(Translator):
             return False
 
     def translate(self, text: str, source_language: str, destination_language: str):
+        start = timeit.default_timer()
+
         try:
             start = timeit.default_timer()
             if source_language != self.src_lang:
@@ -218,19 +220,22 @@ class DeeplTranslator(Translator):
             if destination_language != self.target_lang:
                 self._set_destination_language(destination_language)
 
-            if logger.isEnabledFor(logging.NOTSET): # https://stackoverflow.com/questions/42900214/how-to-download-a-html-webpage-using-selenium-with-python
-                self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}.png")
-                with open(f"{self.src_lang}_{self.target_lang}_{start}.html", "w", encoding='utf-8') as f:
+            if logger.isEnabledFor(
+                    logging.NOTSET):  # https://stackoverflow.com/questions/42900214/how-to-download-a-html-webpage-using-selenium-with-python
+                self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}_____pre_progress__.png")
+                with open(f"{self.src_lang}_{self.target_lang}_{start}_____pre_progress__.html", "w",
+                          encoding='utf-8') as f:
                     f.write(self.driver.page_source)
             self.input_lang_from.write(value=(text), is_clipboard=True)
-            logger.debug(f"TIME SET source {timeit.default_timer() - start}")
+            logger.debug(f"TIME SET :: {start} source {timeit.default_timer() - start}")
         except Exception as e:
             logger.warning("Error catch exception element.........................................................", e)
 
         try:
             time.sleep(4)
             for j in range(10):
-                progress = BaseElement(self.driver,"XPATH", f"//*[@id='translator-progress-description']", optional=True)
+                progress = BaseElement(self.driver, "XPATH", f"//*[@id='translator-progress-description']",
+                                       optional=True)
                 if logger.isEnabledFor(logging.NOTSET):
                     self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}___progress_{j}.png")
                     with open(f"{self.src_lang}_{self.target_lang}_{start}____progress_{j}.html", "w", encoding='utf-8') as f:
@@ -238,7 +243,7 @@ class DeeplTranslator(Translator):
                 time.sleep(1)
                 if progress and progress.element:
                     time.sleep(2)
-                    print("*")
+                    logger.info(f"*** {progress.element.text}")
                 if progress is None:
                     break
         except:
@@ -248,18 +253,19 @@ class DeeplTranslator(Translator):
             self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}_after_waiting.png")
             with open(f"{self.src_lang}_{self.target_lang}_{start}_after_waiting.html", "w", encoding='utf-8') as f:
                 f.write(self.driver.page_source)
-        # Maximun number of iterations 60 seconds
+
         for _ in range(10):
             try:
                 translation = self.input_destination_language.value
-                print(f"{start} :: translation output :: {_} :: {timeit.default_timer() - start}")
+                logger.info(
+                    f"{timeit.default_timer()} - {start} :: translation output :: [{_}] :: {timeit.default_timer() - start}")
 
                 if self._is_translated(text, translation):
                     # Reset the proxy flag -- is success - last not failed
                     self.last_translation_failed = False
                     try:
                         time.sleep(2)
-                        self.driver.find_element(By.TAG_NAME,'body').send_keys(Keys.CONTROL + Keys.HOME)
+                        self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.CONTROL + Keys.HOME)
                     except:
                         logger.info("Exception throw scroll by HOME")
                     return translation
