@@ -252,7 +252,7 @@ class DeeplTranslator(Translator):
         for _ in range(10):
             try:
                 translation = self.input_destination_language.value
-                print(f"translation output ::{_}: {timeit.default_timer() - start}")
+                print(f"{start} :: translation output :: {_} :: {timeit.default_timer() - start}")
 
                 if self._is_translated(text, translation):
                     # Reset the proxy flag -- is success - last not failed
