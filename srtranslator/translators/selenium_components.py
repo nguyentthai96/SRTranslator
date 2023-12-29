@@ -97,7 +97,7 @@ class TextArea(BaseElement):
             if os.getenv("MOZ_HEADLESS") is None:  # hidden browser
                 pyperclip.copy(value)
             else:
-                time.sleep(int(len(value) / 1500))
+                time.sleep(max(float(len(value) / 1500), 5))
                 self.driver.execute_script(f"navigator.clipboard.writeText(`{value}`);")  # app.jsx
 
             actions_handler.key_down(cmd_ctrl).send_keys('v').key_up(cmd_ctrl).perform()
