@@ -180,9 +180,10 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         # executable_path=ChromeDriverManager().install(),
         service_args=[
             '--disable-build-check',
-                      '--append-log',
-                      '--readable-timestamp',
-                      '--log-level=DEBUG'
+            # '--unsafely-treat-insecure-origin-as-secure=https://www.deepl.com' // allow get resource from enpoint not safe http
+            '--append-log',
+            '--readable-timestamp',
+            '--log-level=DEBUG',
         ],
         log_path='./logs/selenium.log'
     )
