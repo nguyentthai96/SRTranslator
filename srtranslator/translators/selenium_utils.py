@@ -184,7 +184,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
                       '--readable-timestamp',
                       '--log-level=DEBUG'
         ],
-        log_path='logs/selenium.log'
+        log_path='./logs/selenium.log'
     )
     options = webdriver.ChromeOptions()
     if os.getenv("MOZ_HEADLESS"):
@@ -195,14 +195,18 @@ def create_driver(proxy: Optional = None) -> WebDriver:
     options.add_argument('window-size=1920x1080')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('disable-gpu')
-    options.add_experimental_option("detach", True)
+    #
     # options.add_argument("--remote-debugging-port=9222")
     options.add_argument('user-data-dir=./ChromeProfile')
 
+    options.add_argument("--enable-javascript")
+    options.add_argument("start-maximized")
+    #
+    options.add_experimental_option("detach", True)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
-    options.add_argument("--disable-blink-features=AutomationControlled")
-
+    options.add_argument("--disable-user-media-security=true")
+    # options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument(f'user-agent={user_agent}')
     logger.info("Creating Selenium Webdriver instance")
 
