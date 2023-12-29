@@ -90,12 +90,14 @@ class TextArea(BaseElement):
         actions_handler.send_keys(Keys.CLEAR).perform()
         if is_clipboard:
             # Copy the large text to the clipboard using pyperclip
-            # pyperclip.copy(value)
             # xerox.copy(value)
             # klembord.set_text(value)
             # data =html.escape(value)
             # self.driver.execute_script(f"navigator.clipboard.writeText(unescape(`{data}`));")
-            self.driver.execute_script(f"navigator.clipboard.writeText(`{value}`);")
+            if os.getenv("MOZ_HEADLESS") is None:  # hidden browser
+                pyperclip.copy(value)
+            else:
+                self.driver.execute_script(f"navigator.clipboard.writeText(`{value}`);")
             actions_handler.key_down(cmd_ctrl).send_keys('v').key_up(cmd_ctrl).perform()
         else:
             actions_handler.send_keys(*value).perform()
