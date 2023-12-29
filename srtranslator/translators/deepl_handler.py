@@ -147,20 +147,27 @@ class DeeplTranslator(Translator):
         logger.info("Checking login username.")
         user_logged = None
         try:
-            #find_element = self.driver.find_elements if multiple else self.driver.find_element
+            # find_element = self.driver.find_elements if multiple else self.driver.find_element Text
             # self.element = find_element((By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
-            user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']", optional=True)
+            user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']//span",
+                                 multiple=True, optional=True)
+
             if user_logged and user_logged.element:
-                self.username_current = user_logged.element.text
+                els = user_logged.element
+                if len(els) > 1:
+                    self.username_current = els[1].text
+                else:
+                    self.username_current = els.text
             else:
                 self.username_current = None
         except:
             logger.info("Checking login failed.")
             self.username_current = None
         logger.info(f"Username current login :: {self.username_current}")
-        if self.username_current is not None and ( len(self.username_current) > 0 > self.username_current.find(username)): # login others
+        if self.username_current is not None and (
+                len(self.username_current) > 0 > self.username_current.find(username)):  # login others
             logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
-            user_logged.click() # Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']").click()
+            user_logged.click()  # Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']").click()
             time.sleep(3)
             Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
             # self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
