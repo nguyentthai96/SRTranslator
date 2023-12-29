@@ -179,7 +179,7 @@ class DeeplTranslator(Translator):
         logger.info("Enter login submit!")
         button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
         button_submit.click()
-        time.sleep(5)
+        time.sleep(8)
         #
         notification = BaseElement(self.driver, "XPATH", f"//div[@data-testid='error-notification']", optional=True)
         if notification.element:
