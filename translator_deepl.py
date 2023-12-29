@@ -174,7 +174,7 @@ if not os.path.exists(pathlib.Path('logs').resolve()):
 logHandler = handlers.RotatingFileHandler('logs/application_srt.log', maxBytes=102400, backupCount=100)
 logHandler.rotator = GZipRotator()
 
-logging.basicConfig(format='%(asctime)s,%(msecs)d  %(levelname)s   %(filename)s    %(message)s',
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)s %(filename)s:%(lineno)d[%(funcName)s] - %(message)s',
                     datefmt='%H:%M:%S',
                     level=args.loglevel,
                     handlers=[stdout_handler, logHandler]
