@@ -26,10 +26,11 @@ from .selenium_components import (
 
 logger = logging.getLogger(__name__)
 
+
 class DeeplTranslator(Translator):
     url = "https://www.deepl.com/translator"
     max_char = 3000
-    proxy_address:List[str] = None
+    proxy_address: List[str] = None
     languages = {
         "auto": "Any language (detect)",
         "bg": "Bulgarian",
@@ -91,10 +92,11 @@ class DeeplTranslator(Translator):
         self._closePopUp()
 
         self.input_lang_from = TextArea(
-            self.driver, "XPATH",f"//d-textarea[@data-testid='translator-source-input']" # @data-testid='translator-source-input'  @aria-labelledby='translation-source-heading'
+            self.driver, "XPATH", f"//d-textarea[@data-testid='translator-source-input']"
+            # @data-testid='translator-source-input'  @aria-labelledby='translation-source-heading'
         )
         self.input_destination_language = TextArea(
-            self.driver, "XPATH",f"//d-textarea[@data-testid='translator-target-input']"
+            self.driver, "XPATH", f"//d-textarea[@data-testid='translator-target-input']"
         )
 
         self.src_lang = None
@@ -115,7 +117,7 @@ class DeeplTranslator(Translator):
             self.driver,
             "CSS_SELECTOR",
             "[aria-label=Close]",
-            #wait_time=50,
+            # wait_time=50,
             optional=True,
         ).click()
 
@@ -140,7 +142,6 @@ class DeeplTranslator(Translator):
 
         # Click the wanted language button
         Button(self.driver, "XPATH", xpath).click()
-
 
     def _set_login(self, username: str, password: str) -> None:
         time.sleep(8)
@@ -173,7 +174,8 @@ class DeeplTranslator(Translator):
             # self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
             time.sleep(6)
             self._closePopUp()
-        elif self.username_current is not None and (len(self.username_current) > 0 and self.username_current.find(username) >= 0): # login same
+        elif self.username_current is not None and (
+                len(self.username_current) > 0 and self.username_current.find(username) >= 0):  # login same
             return
 
         button_login = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-out-btn']")
@@ -195,7 +197,8 @@ class DeeplTranslator(Translator):
         else:
             time.sleep(8)
             try:
-                user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']", optional=True)
+                user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']",
+                                     optional=True)
                 if user_logged and user_logged.element:
                     self.username_current = user_logged.element.text
                 else:
@@ -234,6 +237,8 @@ class DeeplTranslator(Translator):
                           encoding='utf-8') as f:
                     f.write(self.driver.page_source)
             self.input_lang_from.write(value=(text), is_clipboard=True)
+            if len(text.split("\n\n")) != len(self.input_lang_from.value.split('\n\n')):
+                self.input_lang_from.write(value=(text), is_clipboard=True)
             logger.debug(f"TIME SET :: {start} source {timeit.default_timer() - start}")
         except Exception as e:
             logger.warning("Error catch exception element.........................................................", e)
@@ -245,7 +250,8 @@ class DeeplTranslator(Translator):
                                        optional=True)
                 if logger.isEnabledFor(logging.NOTSET):
                     self.driver.save_screenshot(f"{self.src_lang}_{self.target_lang}_{start}___progress_{j}.png")
-                    with open(f"{self.src_lang}_{self.target_lang}_{start}____progress_{j}.html", "w", encoding='utf-8') as f:
+                    with open(f"{self.src_lang}_{self.target_lang}_{start}____progress_{j}.html", "w",
+                              encoding='utf-8') as f:
                         f.write(self.driver.page_source)
                 time.sleep(1)
                 if progress and progress.element:
@@ -261,7 +267,7 @@ class DeeplTranslator(Translator):
             with open(f"{self.src_lang}_{self.target_lang}_{start}_after_waiting.html", "w", encoding='utf-8') as f:
                 f.write(self.driver.page_source)
 
-        for _ in range(10):
+        for _ in range(5):
             try:
                 translation = self.input_destination_language.value
                 logger.info(
