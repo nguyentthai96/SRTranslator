@@ -9,6 +9,7 @@ import logging
 from urllib.parse import urlparse
 from selenium_stealth import stealth
 import pyperclip
+from fake_useragent import UserAgent
 
 from typing import Optional, List
 import html
@@ -28,8 +29,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver import Firefox, FirefoxOptions, FirefoxProfile
-
-from srtranslator.translators.user_agents import user_agents
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +76,9 @@ def create_driver(proxy: Optional = None) -> WebDriver:
 
     # firefox -marionette -start-debugger-server 2828
 
-    BROWSERS_TYPE:str = os.getenv('BROWSERS_TYPE')
-    user_agent = random.choice(user_agents)
+    BROWSERS_TYPE: str = os.getenv('BROWSERS_TYPE')
+    ua = UserAgent()
+    user_agent = ua.random
     if 'firefox' == BROWSERS_TYPE.lower():
         pathProfile = 'FirefoxProfile'
         firefox_profile = pathlib.Path(pathProfile).resolve()
