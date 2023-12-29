@@ -273,7 +273,7 @@ for filepath in list_file:
             if translator is not None:
                 translator.quit()
             proxy = None
-            if not args.proxy_required:
+            if args.proxy_required:
                 proxy = create_proxy(country_id=["US", "GB"])
             driver = create_driver(proxy)
             translator = DeeplTranslator(driver, username=args.username, password=args.userpassword)
