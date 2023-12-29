@@ -170,7 +170,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         if logger.isEnabledFor(logging.DEBUG):
             driver.get("https://ifconfig.me")
             driver.save_screenshot("check_ip.png")
-            agent = driver.execute_script("return navigator.userAgent")
+            agent = driver.execute_script("return navigator.userAgent;")
             profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
             logger.info("Profile name of Firefox running :: %s  agent %s", profile_name, agent)
         driver.maximize_window()
@@ -220,6 +220,8 @@ def create_driver(proxy: Optional = None) -> WebDriver:
     if logger.isEnabledFor(logging.DEBUG):
         driver.get("https://ifconfig.me")
         driver.save_screenshot("check_ip.png")
+        agent = driver.execute_script("return navigator.userAgent;")
+        logger.info("Profile name of Chrome running ::  agent %s", agent)
 
     # https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec/53040904#53040904
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
