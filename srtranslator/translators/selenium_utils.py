@@ -221,7 +221,12 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         driver.get("https://ifconfig.me")
         driver.save_screenshot("check_ip.png")
 
+    # https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec/53040904#53040904
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": user_agent})
+    driver.execute_cdp_cmd("Browser.grantPermissions", {
+        "permissions": ["clipboardReadWrite", "backgroundSync", "backgroundFetch"]
+    })
     #
     stealth(driver,
             languages=["en-US", "en"],
