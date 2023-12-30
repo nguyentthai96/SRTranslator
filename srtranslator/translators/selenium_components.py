@@ -9,6 +9,7 @@ import logging
 import timeit
 from urllib.parse import urlparse
 
+import pyautogui
 import pyperclip
 
 from typing import Optional, List
@@ -97,6 +98,9 @@ class TextArea(BaseElement):
             if os.getenv("MOZ_HEADLESS") is None:  # hidden browser
                 pyperclip.copy(value)
             else:
+                # BROWSERS_TYPE: str = os.getenv('BROWSERS_TYPE')
+                # if 'firefox' == BROWSERS_TYPE.lower():
+                #     pyautogui.write(value)
                 time.sleep(max(float(len(value) / 1500), 5))
                 self.driver.execute_script(f"navigator.clipboard.writeText(`{value}`);")  # app.jsx
 

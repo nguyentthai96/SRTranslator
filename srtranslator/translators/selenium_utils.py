@@ -18,6 +18,7 @@ from fp.fp import FreeProxy
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriverdownloader import GeckoDriverDownloader
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -166,7 +167,9 @@ def create_driver(proxy: Optional = None) -> WebDriver:
             # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
             # https://github.com/aiworkplace/Selenium-Project
             driver = webdriver.Firefox(options=options, service=service)
-
+            driver.execute("executeCdpCommand", {"cmd": "Browser.grantPermissions", "params": {
+                "permissions": ["clipboardReadWrite", "backgroundSync", "backgroundFetch"]
+            }})
         if logger.isEnabledFor(logging.DEBUG):
             driver.get("https://ifconfig.me")
             driver.save_screenshot("check_ip.png")
@@ -215,7 +218,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         driver = webdriver.Chrome(options=options, service=service)
     except WebDriverException as e:
         logger.info("Installing Driver cause it isn't installed")
-        logging.exception("WebDriverException", e)
+        logging.exception("WebDriverException", e, stack_info=True)
         ChromeDriverManager().install()
         driver = webdriver.Chrome(options=options, service=service)
     if logger.isEnabledFor(logging.DEBUG):
