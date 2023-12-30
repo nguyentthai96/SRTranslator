@@ -177,10 +177,10 @@ class DeeplTranslator(Translator):
             self.user_session_view.click()
             time.sleep(1)
             user_logged = Text(self.driver, "XPATH",
-                                 # f"//nav[@aria-labelledby='usernav-button']//div[@class='user-item']//section[@aria-labelledby='userItemUserInfo']",
-                                 f"//h2[@id='userItemUserInfo']/parent::section//div//p",
-                                    multiple=True,
-                                 optional=True)
+                               # f"//nav[@aria-labelledby='usernav-button']//div[@class='user-item']//section[@aria-labelledby='userItemUserInfo']",
+                               f"//h2[@id='userItemUserInfo']/parent::section//div//p",
+                               multiple=True,
+                               optional=True)
 
             if user_logged and user_logged.element:
                 els = user_logged.element
@@ -192,7 +192,7 @@ class DeeplTranslator(Translator):
                 self.username_current = None
             time.sleep(1)
             self._closePopUp()
-            time.sleep(2)
+            time.sleep(1)
         except:
             logger.error("Checking login firefox failed.")
             self.username_current = None
@@ -213,7 +213,7 @@ class DeeplTranslator(Translator):
             btnLogout = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']", optional=True)
 
         btnLogout.click()  # self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
-        time.sleep(6)
+        time.sleep(5)
         self._closePopUp()
 
     def _set_login(self, username: str, password: str) -> None:
@@ -351,6 +351,29 @@ class DeeplTranslator(Translator):
             logger.info("Enter login submit!")
             button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
             button_submit.click()
-            time.sleep(8)
+            self._try_waiting_cloudflare()
         except:
             logger.info("Login failed.")
+
+    def _try_waiting_cloudflare(self):
+        time.sleep(5)
+        for j in range(15):
+            try:
+                logger.info("Checking Cloudflare........")
+                progress = TextArea(self.driver, "XPATH",
+                                f"//div[@class='main-content']//h1[contains(text(),'clearance.deepl.com')]",
+                                # f"//body//div[@class='main-wrapper']//div[@class='main-content']//h1 | //*//h1[contains(text(),'clearance.deepl.com')]",
+                                # f"//head//title[contains(text(),'Just a moment...'] | //body//div[@class='main-wrapper']//div[@class='main-content']//h1 | //*//h1[contains(text(),'clearance.deepl.com')]",
+                                optional=True)
+                if logger.isEnabledFor(logging.NOTSET):
+                    self.driver.save_screenshot(f"Waiting__clearance__progress_{j}.png")
+                    with open(f"Waiting__clearance__progress_{j}.html", "w", encoding='utf-8') as f:
+                        f.write(self.driver.page_source)
+                if progress and progress.element:
+                    time.sleep(7)
+                    logger.info(f"*** waiting Cloudflare ::  {progress.element.text}")
+                if progress is None:
+                    break
+            except:
+                pass
+

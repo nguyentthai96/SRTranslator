@@ -18,11 +18,11 @@ python setup.py install
 
 pip install Cython --install-option="--no-cython-compile"
 
-pyinstaller -F -i app.ico .\translator_deepl.py
-
 python.exe -m pip install --upgrade pip
 
+pyinstaller -F -i app.ico .\translator_deepl.py
 
+self.driver.save_screenshot(f"debugs.png")
 
 
 
