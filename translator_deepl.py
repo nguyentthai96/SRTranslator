@@ -171,7 +171,7 @@ stdout_handler.setLevel(args.loglevel)  # logging.WARNING
 
 if not os.path.exists(pathlib.Path('logs').resolve()):
     os.makedirs(pathlib.Path('logs').resolve())
-logHandler = handlers.RotatingFileHandler('logs/application_srt.log', maxBytes=102400, backupCount=100)
+logHandler = handlers.RotatingFileHandler('logs/application_srt.log',encoding= "utf-8", maxBytes=102400, backupCount=100)
 logHandler.rotator = GZipRotator()
 
 # https://stackoverflow.com/questions/533048/how-to-log-source-file-name-and-line-number-in-python

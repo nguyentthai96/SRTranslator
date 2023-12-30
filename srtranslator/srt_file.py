@@ -196,7 +196,7 @@ class SrtFile:
 
         # For each chunk of the file (based on the translator capabilities)
         for subs_slice in self._get_next_chunk(translator.max_char):
-            first_str = str('; '.join(subs_slice[0].content)) if isinstance(subs_slice[0].content,list) else subs_slice[0].content
+            first_str = str('; '.join(subs_slice[0].content)) if isinstance(subs_slice[0].content,list) else str(subs_slice[0].content)
             logger.info(f"......Waiting batch translating............ {int(100 * progress / self.length)} percent   %s",first_str)
 
             # Put chunk in a single text with break lines

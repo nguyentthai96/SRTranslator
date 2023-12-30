@@ -186,8 +186,10 @@ class DeeplTranslator(Translator):
                 els = user_logged.element
                 if len(els) > 1:
                     self.username_current = els[1].text
+                    self.user_session_view = els[1]
                 else:
                     self.username_current = els[0].text
+                    self.user_session_view = els[0]
             else:
                 self.username_current = None
             time.sleep(1)
@@ -199,7 +201,7 @@ class DeeplTranslator(Translator):
 
     def _logout_user_session(self):
         self.user_session_view.click()  # view popup button avatar
-        time.sleep(2)
+        time.sleep(3)
         labelLogout = "Log out"
         xpath_by_property = f"//nav[@aria-labelledby='usernav-button']//ul[@class='list-none']//span[contains(text(),'{labelLogout}')]"
         x_path_by_text = f"//nav[@aria-labelledby='usernav-button']//span[text()='Log out']"
