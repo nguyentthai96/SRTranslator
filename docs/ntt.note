@@ -20,6 +20,8 @@ pip install Cython --install-option="--no-cython-compile"
 
 pyinstaller -F -i app.ico .\translator_deepl.py
 
+python.exe -m pip install --upgrade pip
+
 
 
 

@@ -183,7 +183,7 @@ logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
 logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-logger.info("Application Starting Version :: 20231005 - product new version ui deepl")
+logger.info("Application Starting Version :: 20231230 - product new version fix change ui login, optimize copy past input srt deepl")
 
 
 #
@@ -254,7 +254,7 @@ for filepath in list_file:
     try:
         head, tail = os.path.split(filepath)
         logger.info(
-            f"......... FILES TRANSLATING {int(100 * progress / len(list_file))}%   files {tail}... (summary: {failed} failed)")
+            f"......... FILES TRANSLATING {int(100 * progress / len(list_file))}%   files {tail}... ({progress}/{len(list_file)} summary: {failed} failed)")
         srt = SrtFile(filepath)
         srt.translate(translator, args.src_lang, args.dest_lang)
         # srt.wrap_lines()
