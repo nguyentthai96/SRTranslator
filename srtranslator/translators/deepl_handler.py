@@ -143,10 +143,7 @@ class DeeplTranslator(Translator):
         # Click the wanted language button
         Button(self.driver, "XPATH", xpath).click()
 
-    def _set_login(self, username: str, password: str) -> None:
-        time.sleep(8)
-        logger.info("Checking login username.")
-        user_logged = None
+    def _check_user_session_default(self):
         try:
             # find_element = self.driver.find_elements if multiple else self.driver.find_element Text
             # self.element = find_element((By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
@@ -157,38 +154,86 @@ class DeeplTranslator(Translator):
                 els = user_logged.element
                 if len(els) > 1:
                     self.username_current = els[1].text
+                    self.user_session_view = els[1]
                 else:
-                    self.username_current = els.text
+                    self.username_current = els[0].text
+                    self.user_session_view = els[0]
+
             else:
                 self.username_current = None
         except:
-            logger.info("Checking login failed.")
+            logger.error("Checking login failed, next check firefox.")
             self.username_current = None
+
+        if self.username_current is None:
+            logger.info("Try more check user session with firefox.")
+            self._check_user_session_firefox()
+
+    def _check_user_session_firefox(self):
+        try:
+            # find_element = self.driver.find_elements if multiple else self.driver.find_element Text
+            # self.element = find_element((By.XPATH, f"//div[@class='dl_header_menu_v2__buttons__emailName_container']"))
+            self.user_session_view = Button(self.driver, "XPATH", f"//button[@id='usernav-button']", optional=True)
+            self.user_session_view.click()
+            time.sleep(1)
+            user_logged = Text(self.driver, "XPATH",
+                                 # f"//nav[@aria-labelledby='usernav-button']//div[@class='user-item']//section[@aria-labelledby='userItemUserInfo']",
+                                 f"//h2[@id='userItemUserInfo']/parent::section//div//p",
+                                    multiple=True,
+                                 optional=True)
+
+            if user_logged and user_logged.element:
+                els = user_logged.element
+                if len(els) > 1:
+                    self.username_current = els[1].text
+                else:
+                    self.username_current = els[0].text
+            else:
+                self.username_current = None
+            time.sleep(1)
+            self._closePopUp()
+            time.sleep(2)
+        except:
+            logger.error("Checking login firefox failed.")
+            self.username_current = None
+
+    def _logout_user_session(self):
+        self.user_session_view.click()  # view popup button avatar
+        time.sleep(2)
+        labelLogout = "Log out"
+        xpath_by_property = f"//nav[@aria-labelledby='usernav-button']//ul[@class='list-none']//span[contains(text(),'{labelLogout}')]"
+        x_path_by_text = f"//nav[@aria-labelledby='usernav-button']//span[text()='Log out']"
+        x_path_by_text = f"//nav[@aria-labelledby='usernav-button']//span[text()='Log out']"
+        btnLogout = Button(self.driver, "XPATH",
+                           f"{xpath_by_property} | {x_path_by_text} | //button[@data-testid='menu-account-logout']",
+                           optional=True)
+        if btnLogout and btnLogout.element:
+            logger.info("Logout on firefox....")
+        else:
+            btnLogout = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']", optional=True)
+
+        btnLogout.click()  # self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
+        time.sleep(6)
+        self._closePopUp()
+
+    def _set_login(self, username: str, password: str) -> None:
+        time.sleep(8)
+        logger.info("Checking login username.")
+        self.user_session_view = None
+
+        self._check_user_session_default()
+
         logger.info(f"Username current login :: {self.username_current}")
         if self.username_current is not None and (
                 len(self.username_current) > 0 > self.username_current.find(username)):  # login others
             logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
-            user_logged.click()  # Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']").click()
-            time.sleep(3)
-            Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-logout']").click()
-            # self.driver.execute_script('$(`[data-testid="menu-account-logout"]`).click()')
-            time.sleep(6)
-            self._closePopUp()
+            self._logout_user_session()
         elif self.username_current is not None and (
                 len(self.username_current) > 0 and self.username_current.find(username) >= 0):  # login same
             return
 
-        button_login = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-out-btn']")
-        button_login.click()
-        time.sleep(4)
-        input_email = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-username']")
-        input_email.write(username)
-        input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
-        input_password.write(password)
-        logger.info("Enter login submit!")
-        button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
-        button_submit.click()
-        time.sleep(8)
+        self._login_user_session_new(username, password)
+
         #
         notification = BaseElement(self.driver, "XPATH", f"//div[@data-testid='error-notification']", optional=True)
         if notification.element:
@@ -196,16 +241,8 @@ class DeeplTranslator(Translator):
             logger.error(f"==========================================================================================")
         else:
             time.sleep(8)
-            try:
-                user_logged = Button(self.driver, "XPATH", f"//button[@data-testid='menu-account-in-btn']",
-                                     optional=True)
-                if user_logged and user_logged.element:
-                    self.username_current = user_logged.element.text
-                else:
-                    self.username_current = None
-            except:
-                self.username_current = None
 
+            self._check_user_session_default()
             logger.info(f"Now login with username :: {self.username_current}")
 
     def _is_translated(self, original: str, translation: str) -> bool:
@@ -298,3 +335,22 @@ class DeeplTranslator(Translator):
 
     def quit(self):
         self.driver.quit()
+
+    def _login_user_session_new(self, username: str, password: str):
+        try:
+            logger.debug("Login new session, click button login to redirect to page login.")
+            xpath_by_property = f"//button[@data-testid='menu-account-out-btn']"
+            x_path_by_text = f"//button[text()='Login']"
+            button_login = Button(self.driver, "XPATH", f"{xpath_by_property} | {x_path_by_text}")
+            button_login.click()
+            time.sleep(4)
+            input_email = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-username']")
+            input_email.write(username)
+            input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
+            input_password.write(password)
+            logger.info("Enter login submit!")
+            button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
+            button_submit.click()
+            time.sleep(8)
+        except:
+            logger.info("Login failed.")
