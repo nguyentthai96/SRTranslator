@@ -8,5 +8,6 @@
   "proxy_address": ["77.73.69.69:8688"],
   "login_manual": false,
   "proxy_required": false,
+  "type_browser": "firefox",
   "hidden_browser": false
 }

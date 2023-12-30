@@ -366,13 +366,14 @@ class DeeplTranslator(Translator):
                                 # f"//head//title[contains(text(),'Just a moment...'] | //body//div[@class='main-wrapper']//div[@class='main-content']//h1 | //*//h1[contains(text(),'clearance.deepl.com')]",
                                 optional=True)
                 if logger.isEnabledFor(logging.NOTSET):
-                    self.driver.save_screenshot(f"Waiting__clearance__progress_{j}.png")
-                    with open(f"Waiting__clearance__progress_{j}.html", "w", encoding='utf-8') as f:
+                    self.driver.save_screenshot(f"./cloudflare/Waiting__clearance__progress_{j}.png")
+                    with open(f"./cloudflare/Waiting__clearance__progress_{j}.html", "w", encoding='utf-8') as f:
                         f.write(self.driver.page_source)
                 if progress and progress.element:
                     time.sleep(7)
                     logger.info(f"*** waiting Cloudflare ::  {progress.element.text}")
-                if progress is None:
+                    progress = None
+                else:
                     break
             except:
                 pass
