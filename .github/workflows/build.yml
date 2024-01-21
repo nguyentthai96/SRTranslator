@@ -13,6 +13,10 @@ jobs:
   createrelease:
     name: Create Release
     runs-on: [ ubuntu-latest ]
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
     steps:
       - name: Create Release
         id: create_release
