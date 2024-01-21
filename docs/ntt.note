@@ -1,6 +1,6 @@
 
 pip install pyinstaller
-pip freeze > requirements.txt
+
 pip install pyvirtualdisplay
 
 https://stackoverflow.com/questions/5458048/how-can-i-make-a-python-script-standalone-executable-to-run-without-any-dependen
@@ -19,6 +19,8 @@ python setup.py install
 pip install Cython --install-option="--no-cython-compile"
 
 python.exe -m pip install --upgrade pip
+pip install --upgrade setuptools  # pip install --upgrade setuptools --user python
+pip freeze > requirements.txt
 
 pyinstaller -F -i app.ico .\translator_deepl.py
 
