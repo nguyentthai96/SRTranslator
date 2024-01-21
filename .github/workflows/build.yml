@@ -52,7 +52,7 @@ jobs:
               pyinstaller -F -w -n translator_deepl -i app.ico translator_deepl.py &&
               cd dist/ &&
               zip -r9 translator_deepl translator_deepl.app/
-            OUT_FILE_NAME: clipster.zip
+            OUT_FILE_NAME: translator_deepl.zip
             ASSET_MIME: application/zip
           - os: windows-latest
             TARGET: windows
@@ -84,7 +84,7 @@ jobs:
         shell: bash
         run: |
           value=`cat release_url/release_url.txt`
-          echo ::set-output name=upload_url::$value
+          echo "UPLOAD_URL=$value" >> $GITHUB_OUTPUT
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
