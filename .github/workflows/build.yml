@@ -121,7 +121,8 @@ jobs:
       - name: PyPi - Build binary wheel and source tarball
         run: |
           # python -m build --sdist --wheel --outdir dist/
-          release.sh
+          python setup.py sdist bdist_wheel
+          python -m twine upload dist/*
       - name: PyPi - Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
