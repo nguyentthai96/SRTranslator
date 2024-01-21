@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release_url
-          path: release_url
+          path: release_url.txt
 
   build:
     name: Build packages
