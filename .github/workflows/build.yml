@@ -61,7 +61,7 @@ jobs:
             ASSET_MIME: application/vnd.microsoft.portable-executable
         python-version: [ "3.11" ]
     steps:
-      - uses: actions/checkout@v4.2.0
+      - uses: actions/checkout@v4
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
