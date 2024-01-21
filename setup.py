@@ -9,7 +9,7 @@ setup(
     description="Traslate a .SRT file using any custom translator",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
-    version="0.2.9",
+    version="0.2.10",
     license="FREE",
     python_requires=">=3.6",
     install_requires=requirements,
