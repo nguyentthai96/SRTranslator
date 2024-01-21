@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release_url
-          path: release_url.txt
+          path: release_url
 
   build:
     name: Build packages
@@ -66,6 +66,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
       # You can test your matrix by printing the current Python version
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
@@ -81,12 +82,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: release_url
-          path: release_url.txt
+          path: release_url
       - name: Get Release File Name & Upload URL
         id: get_release_info
         shell: bash
         run: |
-          value=`cat release_url.txt`
+          value=`cat release_url/release_url.txt`
           echo "UPLOAD_URL=$value" >> $GITHUB_OUTPUT
       - name: Upload Release Asset
         id: upload-release-asset
