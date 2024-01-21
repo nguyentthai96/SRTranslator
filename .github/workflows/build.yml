@@ -59,7 +59,7 @@ jobs:
             CMD_BUILD: pyinstaller -F -w -n translator_deepl -i app.ico translator_deepl.py
             OUT_FILE_NAME: translator_deepl.exe
             ASSET_MIME: application/vnd.microsoft.portable-executable
-      python-version: [ "3.11" ]
+        python-version: [ "3.11" ]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.11
