@@ -6,7 +6,7 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 
-permissions: read-all # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+permissions: write-all # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
 
 
 jobs:
@@ -89,7 +89,7 @@ jobs:
         run: |
           value=`cat release_url/release_url.txt`
           # echo "UPLOAD_URL=$value" >> $GITHUB_OUTPUT
-          echo ::set-output name=upload_url::$value
+          # echo ::set-output name=upload_url::$value
           upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
           echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
       - name: Upload Release Asset
@@ -99,7 +99,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          upload_url: ${{ env.UPLOAD_URL }}
+          upload_url: ${{ env.UPLOAD_URL }} # https://github.com/nguyentthai96/SRTranslator/settings/actions https://stackoverflow.com/questions/75995802/resource-not-accessible-by-integration-github-action-fails-for-pushed-commit
           asset_path: dist/${{ matrix.OUT_FILE_NAME}}
           asset_name: ${{ matrix.OUT_FILE_NAME}}
           asset_content_type: ${{ matrix.ASSET_MIME}}
