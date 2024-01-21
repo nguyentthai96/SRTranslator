@@ -89,18 +89,18 @@ jobs:
         run: |
           value=`cat release_url/release_url.txt`
           # echo "UPLOAD_URL=$value" >> $GITHUB_OUTPUT
-          # echo ::set-output name=upload_url::$value
-          upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
-          echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
+          echo ::set-output name=upload_url::$value
+      #          upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
+      #          echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          upload_url: ${{ env.UPLOAD_URL }} # https://github.com/nguyentthai96/SRTranslator/settings/actions https://stackoverflow.com/questions/75995802/resource-not-accessible-by-integration-github-action-fails-for-pushed-commit
-          asset_path: dist/${{ matrix.OUT_FILE_NAME}}
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          # upload_url: ${{ env.UPLOAD_URL }} # https://github.com/nguyentthai96/SRTranslator/settings/actions https://stackoverflow.com/questions/75995802/resource-not-accessible-by-integration-github-action-fails-for-pushed-commit
+          asset_path: ./dist/${{ matrix.OUT_FILE_NAME}}
           asset_name: ${{ matrix.OUT_FILE_NAME}}
           asset_content_type: ${{ matrix.ASSET_MIME}}
 
@@ -120,7 +120,8 @@ jobs:
           pip install -r requirements.txt
       - name: PyPi - Build binary wheel and source tarball
         run: |
-          python -m build --sdist --wheel --outdir dist/
+          # python -m build --sdist --wheel --outdir dist/
+          release.sh
       - name: PyPi - Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
