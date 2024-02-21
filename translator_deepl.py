@@ -185,7 +185,7 @@ logging.getLogger('selenium.webdriver.remote').setLevel(logging.INFO)
 logging.getLogger('selenium.webdriver.common').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-logger.info("Application Starting Version :: 20231230 - product new version fix change ui login, optimize copy past input srt deepl")
+logger.info("Application Starting Version :: 20240221 - product new version fix change login flow deepl")
 
 
 #

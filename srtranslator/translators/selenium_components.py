@@ -9,7 +9,6 @@ import logging
 import timeit
 from urllib.parse import urlparse
 
-import pyautogui
 import pyperclip
 
 from typing import Optional, List
