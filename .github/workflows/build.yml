@@ -45,6 +45,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: macos-latest
             TARGET: macos
@@ -123,10 +124,16 @@ jobs:
       - name: PyPi - Build binary wheel and source tarball
         run: |
           # python -m build --sdist --wheel --outdir dist/
-          python setup.py sdist bdist_wheel
-          python -m twine upload dist/*
+          # python setup.py sdist bdist_wheel
+          # python -m twine upload dist/*
       - name: PyPi - Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+          skip-existing: true
+          verify-metadata: true
+          verbose: true
+
+
+# https://forum.nim-lang.org/t/6371
