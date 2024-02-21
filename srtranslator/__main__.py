@@ -3,8 +3,7 @@ import argparse
 import logging
 
 from .srt_file import SrtFile
-from .translators.deepl_api import DeeplApi
-from .translators.deepl_scrap import DeeplTranslator
+from .translators.deepl_handler import DeeplTranslator
 from .translators.translatepy import TranslatePy
 
 parser = argparse.ArgumentParser(description="Translate an .STR file")
@@ -83,7 +82,6 @@ parser.add_argument(
 
 builtin_translators = {
     "deepl-scrap": DeeplTranslator,
-    "deepl-api": DeeplApi,
     "translatepy": TranslatePy,
 }
 

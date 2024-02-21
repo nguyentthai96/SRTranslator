@@ -20,7 +20,7 @@ Import stuff
 import os
 from srtranslator import SrtFile
 from srtranslator.translators.deepl_api import DeeplApi
-from srtranslator.translators.deepl_scrap import DeeplTranslator
+from srtranslator.translators.deepl_handler import DeeplTranslator
 from srtranslator.translators.translatepy import TranslatePy
 ```
 
