@@ -1,0 +1,13 @@
+{
+  "conf": "config.json",
+  "dest_lang": "en-US",
+  "src_lang": "auto",
+  "wrap_limit": 8000,
+  "username": "viphn8688@gmail.com",
+  "userpassword": "*Um5h^a6X8VbTn7^",
+  "proxy_address": ["77.73.69.69:8688"],
+  "login_manual": false,
+  "proxy_required": false,
+  "type_browser": "firefox",
+  "hidden_browser": true
+}

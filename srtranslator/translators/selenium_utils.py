@@ -1,52 +1,65 @@
-import sys
+import os
 import logging
-
+import os
+import pathlib
+import random
 from typing import Optional, List
+from urllib.parse import urlparse
+
+from fake_useragent import UserAgent
 from fp.fp import FreeProxy
 from selenium import webdriver
-from webdriverdownloader import GeckoDriverDownloader
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver import ActionChains, Keys
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import Proxy
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium_stealth import stealth
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriverdownloader import GeckoDriverDownloader
+
+from .selenium_components import (
+    TextArea,
+    Button,
+    Text,
+)
 
 
-def create_proxy(country_id: Optional[List[str]] = ["US"]) -> Proxy:
+logger = logging.getLogger(__name__)
+
+
+def create_proxy(country_id: Optional[List[str]] = ["US"],
+                 proxyAddresses: Optional[List[str]] = None) -> Optional:
     """Creates a new proxy to use with a selenium driver and avoid get banned
 
     Args:
         country_id (Optional[List[str]], optional): Contry id to create proxy. Defaults to ['US'].
+        proxyAddresses (Optional[List[str]], optional): list address proxy.
 
     Returns:
         Proxy: Selenium WebDriver proxy
     """
-    i = 0
-    while i < 3:
-        try:
-            logging.info("Getting a new Proxy from https://www.sslproxies.org/")
-            proxy = FreeProxy(country_id=country_id).get()
-            proxy = Proxy(
-                dict(
-                    proxyType=ProxyType.MANUAL,
-                    httpProxy=proxy,
-                    ftpProxy=proxy,
-                    sslProxy=proxy,
-                    noProxy="",
-                )
-            )
-            return proxy
-        except:
-            logging.info("Exception while getting Proxy. Trying again")
-            i += 1
+    if os.getenv("DISABLE_PROXY"): # have data or "1" return None as disable proxy
+        return None
 
-    raise Exception("Unable to get proxy")
+    if proxyAddresses is None:
+        logger.info("Getting a new Proxy from https://www.sslproxies.org/")
+        address = FreeProxy(country_id=country_id, https=True).get()
+        parse = urlparse(address)
+        proxyAddress = f"{parse.hostname}:{parse.port}"
+    else:
+        proxyAddress = random.choice(proxyAddresses)
+
+    [proxyHost, proxyPort] = proxyAddress.split(":")
+
+    return dict(
+        proxyAddress=proxyAddress,
+        proxyHost=proxyHost,
+        proxyPort=int(proxyPort)
+    )
 
 
-def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
-    """Creates a new Firefox selenium webdriver. Install geckodriver if not in path
+def create_driver(proxy: Optional = None) -> WebDriver:
+    """Creates a new Browser selenium webdriver. Install driver if not in path
 
     Args:
         proxy (Optional[Proxy], optional): Selenium WebDriver proxy. Defaults to None.
@@ -54,89 +67,181 @@ def create_driver(proxy: Optional[Proxy] = None) -> WebDriver:
     Returns:
         WebDriver: Selenium WebDriver
     """
-    logging.info("Creating Selenium Webdriver instance")
+
+    # firefox -marionette -start-debugger-server 2828
+
+    BROWSERS_TYPE: str = os.getenv('BROWSERS_TYPE')
+    if 'firefox' == BROWSERS_TYPE.lower():
+        pathProfile = 'FirefoxProfile'
+        firefox_profile = pathlib.Path(pathProfile).resolve()
+
+        service = webdriver.firefox.service.Service(
+            # executable_path='/home/nguyentthai96/webdriver',
+            # port=3000,
+            service_args=[
+                # '--marionette-port', '2828', '--connect-existing',
+                '--log', 'debug',
+                '--profile-root', pathProfile
+            ],
+            log_path='logs/selenium.log',
+        )
+
+        if not os.path.exists(firefox_profile):
+            os.makedirs(firefox_profile)
+
+        options = webdriver.FirefoxOptions()
+        # only using profile.set_preference profile or options.add_argument
+        options.add_argument("-profile")
+        options.add_argument(pathProfile)
+
+        #
+        if os.getenv("MOZ_HEADLESS"):
+            options.add_argument("-headless")
+
+        # options.add_argument(f'user-agent={user_agent}')
+        # options.set_preference("general.useragent.override", f'userAgent={user_agent}')
+        #
+        # firefox_profile = FirefoxProfile()
+        # firefox_profile.set_preference('profile', 'tmp/firefox_profile')
+        # firefox_profile.set_preference("javascript.enabled", True)
+        # options.profile = firefox_profile
+
+        if proxy is not None:
+            logger.info("Connect with proxy address :: %s", proxy['proxyAddress'])
+            # webdriver.DesiredCapabilities.FIREFOX['proxy'] = Proxy(
+            #     dict(
+            #         proxyType=ProxyType.MANUAL,
+            #         httpProxy=proxy['proxyAddress'],
+            #         ftpProxy=proxy['proxyAddress'],
+            #         sslProxy=proxy['proxyAddress'],
+            #         noProxy="",
+            #     )
+            # )
+            # https://stackoverflow.com/questions/42335857/python-selenium-firefox-proxy-does-not-work
+            # # Direct = 0, Manual = 1, PAC = 2, AUTODETECT = 4, SYSTEM = 5
+            options.set_preference("network.proxy.type", 1)
+            options.set_preference("network.proxy.http", proxy['proxyHost'])
+            options.set_preference("network.proxy.httpProxyAll", True)
+            options.set_preference("network.proxy.http_port", proxy['proxyPort'])
+            # options.set_preference("network.proxy.https", proxy['proxyHost'])
+            # options.set_preference("network.proxy.https_port", proxy['proxyPort'])
+            options.set_preference("network.proxy.share_proxy_settings", True)
+            options.set_preference("network.proxy.ssl", proxy['proxyHost'])
+            options.set_preference("network.proxy.ssl_port", proxy['proxyPort'])
+            options.set_preference("network.proxy.socks", proxy['proxyHost'])
+            options.set_preference("network.proxy.socks_port", proxy['proxyPort'])
+            options.set_preference("network.proxy.socks_version", 5)
+            # no use cannot access page
+            options.set_preference('network.proxy.socks_remote_dns', False)
+            options.set_preference('network.proxy.proxyDNS', False)
+            options.set_preference("network.http.use-cache", False)
+        else:
+            options.set_preference("network.proxy.type", 4)
+
+        options.set_preference("dom.events.testing.asyncClipboard", True)
+
+        logger.info("Creating Selenium Webdriver instance")
+        try:
+            driver = webdriver.Firefox(options=options, service=service)
+        except WebDriverException as e:
+            logger.info("Installing Firefox GeckoDriver cause it isn't installed")
+            logging.exception("WebDriverException", e)
+            gdd = GeckoDriverDownloader()
+            gdd.download_and_install()
+
+            # C:\Users\<UserName>\AppData\Roaming.
+            # https://www.browserstack.com/automate/capabilities
+            # https://stackoverflow.com/questions/72331816/how-to-connect-to-an-existing-firefox-instance-using-seleniumpython
+            # https://www.minitool.com/news/your-firefox-profile-cannot-be-loaded.html
+            # firefox -p
+            # firefox.exe --new-instance -ProfileManager -marionette -start-debugger-server 2828
+            # firefox.exe -marionette -start-debugger-server 2828
+            # firefox.exe --new-instance -P deepl -marionette
+            # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
+            # https://github.com/aiworkplace/Selenium-Project
+            driver = webdriver.Firefox(options=options, service=service)
+            driver.execute("executeCdpCommand", {"cmd": "Browser.grantPermissions", "params": {
+                "permissions": ["clipboardReadWrite", "backgroundSync", "backgroundFetch"]
+            }})
+        if logger.isEnabledFor(logging.DEBUG):
+            driver.get("https://ifconfig.me")
+            driver.save_screenshot("check_ip.png")
+            agent = driver.execute_script("return navigator.userAgent;")
+            profile_name = driver.capabilities.get('moz:profile').replace('\\', '/').split('/')[-1]
+            logger.info("Profile name of Firefox running :: %s  agent %s", profile_name, agent)
+        driver.maximize_window()
+        return driver
+
+    service = webdriver.chrome.service.Service(
+        # executable_path=ChromeDriverManager().install(),
+        service_args=[
+            '--disable-build-check',
+            # '--unsafely-treat-insecure-origin-as-secure=https://www.deepl.com' // allow get resource from enpoint not safe http
+            '--append-log',
+            '--readable-timestamp',
+            '--log-level=DEBUG',
+        ],
+        log_path='./logs/selenium.log'
+    )
+    options = webdriver.ChromeOptions()
+    if os.getenv("MOZ_HEADLESS"):
+        options.add_argument('--headless')
+        # # Disable security features (for testing purposes only)
+        # options.add_argument("--disable-web-security")
+        # options.add_argument("--allow-file-access-from-files")
+        # options.add_argument("--allow-file-access")
+    # options.binary_location = ChromeDriverManager().install()
+    options.add_argument('--no-sandbox')
+    #
+    options.add_argument("--start-maximized")
+    options.add_argument('window-size=1920x1080')
+    options.add_argument('--disable-dev-shm-usage') # https://stackoverflow.com/questions/50642308/webdriverexception-unknown-error-devtoolsactiveport-file-doesnt-exist-while-t
+    options.add_argument('disable-gpu')
+    #
+    # options.add_argument("--remote-debugging-port=9222")
+    options.add_argument('user-data-dir=./ChromeProfile')
+
+    options.add_argument("--enable-javascript")
+    options.add_argument("start-maximized")
+    #
+    options.add_experimental_option("detach", True)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
+    options.add_argument("--disable-user-media-security=true")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+
+    ua = UserAgent() # from fake_useragent import UserAgent
+    user_agent = ua.random
+    options.add_argument(f'user-agent={user_agent}')
+
     try:
-        driver = webdriver.Firefox(proxy=proxy)
-    except WebDriverException:
-        logging.info("Installing Firefox GeckoDriver cause it isn't installed")
-        gdd = GeckoDriverDownloader()
-        gdd.download_and_install()
+        logger.info("Creating Selenium Webdriver instance")
+        driver = webdriver.Chrome(options=options, service=service)
+    except WebDriverException as e:
+        logger.info("Installing Driver cause it isn't installed")
+        logging.exception("WebDriverException", e, stack_info=True)
+        ChromeDriverManager().install()
+        driver = webdriver.Chrome(options=options, service=service)
+    if logger.isEnabledFor(logging.DEBUG):
+        driver.get("https://ifconfig.me")
+        driver.save_screenshot("check_ip.png")
+        agent = driver.execute_script("return navigator.userAgent;")
+        logger.info("Profile name of Chrome running ::  agent %s", agent)
 
-        driver = webdriver.Firefox(proxy=proxy)
-
+    # https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec/53040904#53040904
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": user_agent})
+    driver.execute_cdp_cmd("Browser.grantPermissions", {
+        "permissions": ["clipboardReadWrite", "backgroundSync", "backgroundFetch"]
+    })
+    #
+    stealth(driver,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+            )
     driver.maximize_window()
     return driver
-
-
-class BaseElement:
-    def __init__(
-        self,
-        driver: webdriver,
-        locate_by: str,
-        locate_value: str,
-        multiple: bool = False,
-        wait_time: int = 100,
-        optional: bool = False,
-    ) -> None:
-
-        self.driver = driver
-        locator = (getattr(By, locate_by.upper(), "id"), locate_value)
-        find_element = driver.find_elements if multiple else driver.find_element
-        try:
-            WebDriverWait(driver, wait_time).until(
-                lambda driver: EC.element_to_be_clickable(locator)
-            )
-            self.element = find_element(*locator)
-        except:
-            if optional:
-                self.element = None
-                return
-
-            print(f"Timed out trying to get element ({locate_by} = {locate_value})")
-            logging.info("Closing browser")
-            driver.quit()
-            sys.exit()
-
-
-class Text(BaseElement):
-    @property
-    def text(self) -> str:
-        if self.element is None:
-            return ""
-
-        return self.element.get_attribute("text")
-
-
-class TextArea(BaseElement):
-    def write(self, value: str) -> None:
-        if self.element is None:
-            return
-
-        # Check OS to use Cmd or Ctrl keys
-        cmd_ctrl = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
-
-        actions_handler = ActionChains(self.driver).move_to_element(self.element)
-        actions_handler.click().key_down(cmd_ctrl).send_keys("a").perform()
-        actions_handler.send_keys(Keys.CLEAR).key_up(cmd_ctrl).perform()
-        actions_handler.send_keys(*value).perform()
-
-    @property
-    def value(self) -> None:
-        if self.element is None:
-            return ""
-
-        return self.element.get_attribute("value")
-
-
-class Button(BaseElement):
-    def click(self) -> None:
-        if self.element is None:
-            return
-
-        try:
-            can_click = getattr(self.element, "click", None)
-            if callable(can_click):
-                self.element.click()
-        except:
-            # Using javascript if usual click function does not work
-            self.driver.execute_script("arguments[0].click();", self.element)

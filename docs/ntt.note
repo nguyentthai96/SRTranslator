@@ -1,0 +1,42 @@
+
+pip install pyinstaller
+
+pip install pyvirtualdisplay
+
+https://stackoverflow.com/questions/5458048/how-can-i-make-a-python-script-standalone-executable-to-run-without-any-dependen
+pyinstaller -F -- --paths=venv\Lib\site-packages  yourprogram.py
+pyinstaller -F --paths=venv\site-packages  custom_proxy.py
+
+
+sudo apt-get install build-essential python3-dev
+
+
+pip install Cython
+
+python setup.py install
+
+
+pip install Cython --install-option="--no-cython-compile"
+
+python.exe -m pip install --upgrade pip
+pip install --upgrade setuptools  # pip install --upgrade setuptools --user python
+pip freeze > requirements.txt
+
+pyinstaller -F -i app.ico .\translator_deepl.py
+
+self.driver.save_screenshot(f"debugs.png")
+
+
+
+
+
+
+ # C:\Users\<UserName>\AppData\Roaming.
+        # https://www.browserstack.com/automate/capabilities
+        # https://stackoverflow.com/questions/72331816/how-to-connect-to-an-existing-firefox-instance-using-seleniumpython
+        # https://www.minitool.com/news/your-firefox-profile-cannot-be-loaded.html
+        # firefox -p
+        # firefox.exe --new-instance -ProfileManager -marionette -start-debugger-server 2828
+        # firefox.exe -marionette -start-debugger-server 2828
+        # firefox.exe --new-instance -P deepl -marionette
+        # service = Service(port=3000, service_args=['--marionette-port', '2828', '--connect-existing'])
