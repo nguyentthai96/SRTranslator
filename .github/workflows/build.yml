@@ -127,5 +127,8 @@ jobs:
       - name: PyPi - Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
+          # user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+          skip-existing: true
+          verify-metadata: true
+          verbose: true
