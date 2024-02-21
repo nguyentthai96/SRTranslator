@@ -86,7 +86,9 @@ class TextArea(BaseElement):
         cmd_ctrl = Keys.COMMAND if sys.platform == "darwin" else Keys.CONTROL
 
         actions_handler = ActionChains(self.driver).move_to_element(self.element)
+        #self.driver.save_screenshot(f"./clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaa_A{time.time()}.png")
         actions_handler.click().key_down(cmd_ctrl).send_keys("a").key_up(cmd_ctrl).perform()
+        #self.driver.save_screenshot(f"./clipboard/aaaaaaaaaaaaaaaaaaaaaaaaaaaaa_B{time.time()}.png")
         actions_handler.send_keys(Keys.BACKSPACE).perform()
         actions_handler.send_keys(Keys.CLEAR).perform()
         if is_clipboard:

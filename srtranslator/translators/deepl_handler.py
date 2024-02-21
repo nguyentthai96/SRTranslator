@@ -165,7 +165,8 @@ class DeeplTranslator(Translator):
             logger.error("Checking login failed, next check firefox.")
             self.username_current = None
 
-        if self.username_current is None:
+        BROWSERS_TYPE: str = os.getenv('BROWSERS_TYPE')
+        if self.username_current is None or 'firefox' == BROWSERS_TYPE.lower():
             logger.info("Try more check user session with firefox.")
             self._check_user_session_firefox()
 
@@ -178,7 +179,7 @@ class DeeplTranslator(Translator):
             time.sleep(1)
             user_logged = Text(self.driver, "XPATH",
                                # f"//nav[@aria-labelledby='usernav-button']//div[@class='user-item']//section[@aria-labelledby='userItemUserInfo']",
-                               f"//h2[@id='userItemUserInfo']/parent::section//div//p",
+                               f"//h2[@id='userItemUserInfo']/parent::section//div",
                                multiple=True,
                                optional=True)
 
@@ -219,7 +220,7 @@ class DeeplTranslator(Translator):
         self._closePopUp()
 
     def _set_login(self, username: str, password: str) -> None:
-        time.sleep(8)
+        time.sleep(6)
         logger.info("Checking login username.")
         self.user_session_view = None
 
@@ -276,7 +277,11 @@ class DeeplTranslator(Translator):
                           encoding='utf-8') as f:
                     f.write(self.driver.page_source)
             self.input_lang_from.write(value=(text), is_clipboard=True)
-            if len(text.split("\n\n")) != len(self.input_lang_from.value.split('\n\n')):
+            if (self.input_lang_from.value is not None
+                    and len(text.split("\n\n")) != len(
+                        str(self.input_lang_from.value)
+                                                               .split('\n\n'))
+            ):
                 self.input_lang_from.write(value=(text), is_clipboard=True)
             logger.debug(f"TIME SET :: {start} source {timeit.default_timer() - start}")
         except Exception as e:
@@ -308,9 +313,9 @@ class DeeplTranslator(Translator):
 
         for _ in range(5):
             try:
-                translation = self.input_destination_language.value
+                translation = str(self.input_destination_language.value)
                 logger.info(
-                    f"{timeit.default_timer()} - {start} :: translation output :: [{_}] :: input {len(self.input_lang_from.value)} :: translation {len(translation)}")
+                    f"{timeit.default_timer()} - {start} :: translation output :: [{_}] :: input {len(text)} :: translation {len(translation)}")
 
                 if self._is_translated(text, translation):
                     # Reset the proxy flag -- is success - last not failed
@@ -358,7 +363,7 @@ class DeeplTranslator(Translator):
             logger.info("Login failed.")
 
     def _try_waiting_cloudflare(self):
-        time.sleep(5)
+        time.sleep(4)
         for j in range(15):
             try:
                 logger.info("Checking Cloudflare........")
