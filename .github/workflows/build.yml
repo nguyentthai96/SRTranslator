@@ -23,7 +23,7 @@ jobs:
       - name: Get Changelog Content
         id: get_changelog_content
         run: # Replace with your extraction command (e.g.,
-          value=`sed -n '/^## \[${{ github.ref }}\]/,/^---$/p' CHANGELOG.md`
+          value=`echo aaa $(sed -n '/^## \[${{ github.ref }}\]/,/^---$/p' CHANGELOG.md)`
           echo "change_log=$value" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release

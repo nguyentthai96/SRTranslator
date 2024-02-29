@@ -234,7 +234,7 @@ class SrtFile:
             text = [(f"\n" + ("\n".join(sub.content)))
                     if isinstance(sub.content, list) else f"\n{sub.content}"
                     for sub in subs_slice]
-            text = "\n".join(text)
+            text = "\n".join(text)[1:]
 
             if len(text) > translator.max_char:
                 logger.warning(
