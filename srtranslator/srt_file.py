@@ -249,7 +249,7 @@ class SrtFile:
 
             # Break each line back into subtitle content
             translation = translation.splitlines()
-            j: int = 1
+            j: int = 0
             for i in range(len(subs_slice)):
                 if (isinstance(subs_slice[i].content, list)):
                     subs_slice[i].content = translation[j:j + len(subs_slice[i].content)]

@@ -8,7 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ------------------------------------------------------------------------------------------------------------------------
 
 
-## [v2.0.0](https://github.com/nguyentthai96/SRTranslator/compare/v1.0.0...v2.0.0) - 2024-02-22 [Unreleased]
+## [v2.0.2](https://github.com/nguyentthai96/SRTranslator/compare/v2.0.0...v2.0.2) - 2024-02-29 [Unreleased]
+#### Fix bugs
+### :bug: Bug Fixes
+
+---
+
+## [v2.0.0](https://github.com/nguyentthai96/SRTranslator/compare/v1.0.0...v2.0.0) - 2024-02-22 [Released]
 #### Build automation
 
 ### :sparkles: New Features
