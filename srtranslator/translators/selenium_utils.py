@@ -10,7 +10,7 @@ from fake_useragent import UserAgent
 from fp.fp import FreeProxy
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver import Proxy
+from selenium.webdriver import Proxy, DesiredCapabilities
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium_stealth import stealth
@@ -75,15 +75,16 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         pathProfile = 'FirefoxProfile'
         firefox_profile = pathlib.Path(pathProfile).resolve()
 
+        firefox_capabilities = DesiredCapabilities.FIREFOX
         service = webdriver.firefox.service.Service(
             # executable_path='/home/nguyentthai96/webdriver',
             # port=3000,
             service_args=[
                 # '--marionette-port', '2828', '--connect-existing',
                 '--log', 'debug',
-                '--profile-root', pathProfile
+                '--profile-root', str(firefox_profile)
             ],
-            log_path='logs/selenium.log',
+            log_output='logs/selenium.log',
         )
 
         if not os.path.exists(firefox_profile):
@@ -92,8 +93,15 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         options = webdriver.FirefoxOptions()
         # only using profile.set_preference profile or options.add_argument
         options.add_argument("-profile")
-        options.add_argument(pathProfile)
-
+        options.add_argument(str(firefox_profile))
+        # options.binary_location="/Users/nguyenthanhthai/.cache/selenium/firefox/mac-arm64/128.0.3/Firefox.app/Contents/MacOS/firefox"
+        options.add_argument("--disable-popup-blocking")
+        options.set_preference("webdriver.firefox.marionette", False)
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.log.level = "trace"
+        os.environ["MOZ_MARIONETTE"] = "0"
         #
         if os.getenv("MOZ_HEADLESS"):
             options.add_argument("-headless")
@@ -139,6 +147,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
             options.set_preference("network.proxy.type", 4)
 
         options.set_preference("dom.events.testing.asyncClipboard", True)
+        options.set_preference("dom.events.testing.asyncClipboard", True)
 
         logger.info("Creating Selenium Webdriver instance")
         try:
@@ -181,7 +190,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
             '--readable-timestamp',
             '--log-level=DEBUG',
         ],
-        log_path='./logs/selenium.log'
+        log_output='./logs/selenium.log'
     )
     options = webdriver.ChromeOptions()
     if os.getenv("MOZ_HEADLESS"):
@@ -212,7 +221,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
 
     ua = UserAgent() # from fake_useragent import UserAgent
     user_agent = ua.random
-    options.add_argument(f'user-agent={user_agent}')
+    # options.add_argument(f'user-agent={user_agent}')
 
     try:
         logger.info("Creating Selenium Webdriver instance")
@@ -230,7 +239,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
 
     # https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec/53040904#53040904
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": user_agent})
+    # driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": user_agent})
     driver.execute_cdp_cmd("Browser.grantPermissions", {
         "permissions": ["clipboardReadWrite", "backgroundSync", "backgroundFetch"]
     })

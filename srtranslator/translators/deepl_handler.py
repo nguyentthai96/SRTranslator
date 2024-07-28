@@ -3,6 +3,7 @@ import os
 import time
 import timeit
 from typing import Optional, List
+import re
 
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class DeeplTranslator(Translator):
-    url = "https://www.deepl.com/translator"
+    url = "https://www.deepl.com/en/translator"
     max_char = 3000
     proxy_address: List[str] = None
     languages = {
@@ -148,12 +149,19 @@ class DeeplTranslator(Translator):
             if user_logged and user_logged.element:
                 els = user_logged.element
                 if len(els) > 1:
-                    self.username_current = els[1].text
+                    self.username_current = [els[1].text]
                     self.user_session_view = els[1]
                 else:
-                    self.username_current = els[0].text
+                    self.username_current = [els[0].text]
                     self.user_session_view = els[0]
-
+                if self.user_session_view:
+                    self.user_session_view.click()
+                    xpath_by_property = f"//nav[@aria-labelledby='usernav-button']//section[@aria-labelledby='userItemUserInfo']//div"
+                    btnLogout = Button(self.driver, "XPATH",
+                                       f"{xpath_by_property}",
+                                       optional=True)
+                    if btnLogout and btnLogout.element:
+                        self.username_current += [btnLogout.element.text]
             else:
                 self.username_current = None
         except:
@@ -164,6 +172,13 @@ class DeeplTranslator(Translator):
         if self.username_current is None or 'firefox' == BROWSERS_TYPE.lower():
             logger.info("Try more check user session with firefox.")
             self._check_user_session_firefox()
+
+    def _create_regex(self, pattern):
+        # Escape special characters in the input pattern
+        escaped_pattern = re.escape(pattern)
+        # Replace the escaped '***' with a regex pattern that matches any characters
+        regex_pattern = escaped_pattern.replace(r'\*\*\*', '.*')
+        return f"^{regex_pattern}$"
 
     def _check_user_session_firefox(self):
         try:
@@ -201,7 +216,6 @@ class DeeplTranslator(Translator):
         labelLogout = "Log out"
         xpath_by_property = f"//nav[@aria-labelledby='usernav-button']//ul[@class='list-none']//span[contains(text(),'{labelLogout}')]"
         x_path_by_text = f"//nav[@aria-labelledby='usernav-button']//span[text()='Log out']"
-        x_path_by_text = f"//nav[@aria-labelledby='usernav-button']//span[text()='Log out']"
         btnLogout = Button(self.driver, "XPATH",
                            f"{xpath_by_property} | {x_path_by_text} | //button[@data-testid='menu-account-logout']",
                            optional=True)
@@ -216,18 +230,20 @@ class DeeplTranslator(Translator):
 
     def _set_login(self, username: str, password: str) -> None:
         time.sleep(6)
-        logger.info("Checking login username.")
+        logger.info("Checking login username.")  # TODO NTT
         self.user_session_view = None
 
         self._check_user_session_default()
 
         logger.info(f"Username current login :: {self.username_current}")
         if self.username_current is not None and (
-                len(self.username_current) > 0 > self.username_current.find(username)):  # login others
+                len(self.username_current) > 0 and not (any(re.match(self._create_regex(email), username) for email in self.username_current))
+        ):  # login others
             logger.info(f"Username existed user current logged {self.username_current}, need logout that.")
             self._logout_user_session()
         elif self.username_current is not None and (
-                len(self.username_current) > 0 and self.username_current.find(username) >= 0):  # login same
+                len(self.username_current) > 0 and
+                (any(re.match(self._create_regex(email), username) for email in self.username_current))):  # login same
             return
 
         self._login_user_session_new(username, password)
@@ -340,22 +356,35 @@ class DeeplTranslator(Translator):
 
     def _login_user_session_new(self, username: str, password: str):
         try:
+            # Store the ID of the original window
+            self.driver.execute_script(f"window.open('https://www.deepl.com/en/login');") #tab_new
+            time.sleep(10)
+            # Loop through until we find a new window handle
+            self.driver.switch_to.window(self.driver.window_handles[1])
+            # self.driver.get("https://www.deepl.com/en/login") #tab_new
+            # for window_handle in self.driver.window_handles:
+            #     if window_handle != original_window:
+            #         self.driver.switch_to.window(window_handle)
+            #         break
             logger.debug("Login new session, click button login to redirect to page login.")
             xpath_by_property = f"//button[@data-testid='menu-account-out-btn']"
             x_path_by_text = f"//button[text()='Login']"
-            button_login = Button(self.driver, "XPATH", f"{xpath_by_property} | {x_path_by_text}")
-            button_login.click()
-            time.sleep(4)
+            # button_login = Button(self.driver, "XPATH", f"{xpath_by_property} | {x_path_by_text}")
+            # button_login.click()
+            time.sleep(10)
+            self._try_waiting_cloudflare()
             input_email = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-username']")
             input_email.write(username)
+            time.sleep(3)
             input_password = TextArea(self.driver, "XPATH", f"//input[@data-testid='menu-login-password']")
             input_password.write(password)
+            time.sleep(3)
             logger.info("Enter login submit!")
             button_submit = Button(self.driver, "XPATH", f"//button[@data-testid='menu-login-submit']")
             button_submit.click()
             self._try_waiting_cloudflare()
         except:
-            logger.info("Login failed.")
+            logging.exception("Login failed.", stack_info=True)
 
     def _try_waiting_cloudflare(self):
         time.sleep(4)

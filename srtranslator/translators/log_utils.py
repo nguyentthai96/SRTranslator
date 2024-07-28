@@ -34,7 +34,7 @@ def log_config(args):
     # logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)s %(filename)s:%(lineno)d[%(funcName)s] - %(message)s   %(pathname)s',
     logging.basicConfig(
         format='%(asctime)s,%(msecs)d %(levelname)s %(filename)s:%(lineno)d[%(funcName)s] - %(message)s',
-        datefmt='%H:%M:%S',
+        datefmt='%Y-%M-%d %H:%M:%S',
         level=args.loglevel,
         handlers=[stdout_handler, log_handler]
         )
