@@ -192,6 +192,7 @@ def create_driver(proxy: Optional = None) -> WebDriver:
         ],
         log_output='./logs/selenium.log'
     )
+    path_profile = pathlib.Path('ChromeProfile').resolve()
     options = webdriver.ChromeOptions()
     if os.getenv("MOZ_HEADLESS"):
         options.add_argument('--headless')
@@ -205,10 +206,10 @@ def create_driver(proxy: Optional = None) -> WebDriver:
     options.add_argument("--start-maximized")
     options.add_argument('window-size=1920x1080')
     options.add_argument('--disable-dev-shm-usage') # https://stackoverflow.com/questions/50642308/webdriverexception-unknown-error-devtoolsactiveport-file-doesnt-exist-while-t
-    options.add_argument('disable-gpu')
+    # options.add_argument('disable-gpu')
     #
-    # options.add_argument("--remote-debugging-port=9222")
-    options.add_argument('user-data-dir=./ChromeProfile')
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_argument('user-data-dir='+str(path_profile))
 
     options.add_argument("--enable-javascript")
     options.add_argument("start-maximized")
